@@ -1,0 +1,357 @@
+{% extends "core/base.html" %}
+{% block content %}
+
+<div class="mb-6">
+<h2 class="text-2xl font-semibold flex items-center gap-2">
+<i class="fa-solid fa-flask text-blue-500"></i>
+Manual Regression Workbench
+</h2>
+</div>
+
+<!-- ADD REQUEST -->
+<div class="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-6">
+
+<form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+{% csrf_token %}
+
+<select name="environment"
+required
+class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+<option value="">Select Env</option>
+<option value="stage">Stage</option>
+<option value="prod">Production</option>
+</select>
+
+<input type="text"
+name="request_id"
+required
+placeholder="Request ID"
+class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+/>
+
+<button
+type="submit"
+class="bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 font-medium flex items-center justify-center gap-2">
+
+<i class="fa-solid fa-plus"></i>
+Add Request
+
+</button>
+
+</form>
+</div>
+
+<!-- TABLE CARD -->
+<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+
+<!-- TOP BAR -->
+<div class="flex items-center justify-between mb-4">
+
+<div class="flex items-center gap-3">
+
+<button
+id="runSelected"
+type="button"
+class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2">
+Run Selected
+</button>
+
+</div>
+
+<!-- COUNTERS -->
+<div class="flex gap-4 text-xs">
+
+<div class="text-gray-400">
+Processing:
+<span id="count-running" class="text-blue-400 font-semibold">0</span>
+</div>
+
+<div class="text-gray-400">
+Completed:
+<span id="count-completed" class="text-green-400 font-semibold">0</span>
+</div>
+
+<div class="text-gray-400">
+Failed:
+<span id="count-failed" class="text-red-400 font-semibold">0</span>
+</div>
+
+<div class="text-gray-400">
+On Hold:
+<span id="count-hold" class="text-yellow-400 font-semibold">0</span>
+</div>
+
+</div>
+
+</div>
+
+<div class="overflow-auto max-h-[650px]">
+
+<table class="w-full text-sm text-gray-300">
+
+<thead class="text-xs uppercase text-gray-400 border-b border-gray-800 bg-gray-900 sticky top-0 text-left">
+
+<tr>
+<th class="py-2">
+<input type="checkbox" id="selectAll">
+</th>
+
+<th onclick="sortTable(0)" class="cursor-pointer">Env</th>
+<th onclick="sortTable(1)" class="cursor-pointer">Request</th>
+<th onclick="sortTable(2)" class="cursor-pointer">Status</th>
+<th onclick="sortTable(3)">Parent (JID / Status)</th>
+<th onclick="sortTable(4)">Sub (JID / Status)</th>
+<th onclick="sortTable(5)" class="cursor-pointer">User</th>
+<th class="text-left">
+Started
+<button id="filter-started-btn"
+class="ml-1 text-gray-500 hover:text-white">
+<i class="fa-solid fa-filter text-xs"></i>
+</button>
+</th>
+
+<th class="text-left">
+Completed
+<button id="filter-completed-btn"
+class="ml-1 text-gray-500 hover:text-white">
+<i class="fa-solid fa-filter text-xs"></i>
+</button>
+</th>
+<th>Duration</th>
+<th>Action</th>
+</tr>
+
+<!-- FILTER ROW -->
+<tr class="text-xs">
+
+<th></th>
+
+<th>
+<select id="filter-env"
+onchange="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
+<option value="">All</option>
+<option>STAGE</option>
+<option>PROD</option>
+</select>
+</th>
+
+<th>
+<input id="filter-request"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<th>
+<select id="filter-status"
+onchange="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
+<option value="">All</option>
+<option>Processing</option>
+<option>Completed</option>
+<option>On Hold</option>
+<option>Failed</option>
+</select>
+</th>
+
+<th><input id="filter-parent" onkeyup="filterTable()" class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/></th>
+<th><input id="filter-child" onkeyup="filterTable()" class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/></th>
+<th><input id="filter-user" onkeyup="filterTable()" class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/></th>
+
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for req in records %}
+<tr id="row-{{ req.id }}" class="border-b border-gray-800 hover:bg-gray-800/40">
+
+<td>
+<input type="checkbox" class="row-select" value="{{ req.id }}">
+</td>
+
+<td class="text-gray-400">{{ req.environment|upper }}</td>
+
+<td>
+{% if req.environment == "stage" %}
+<a href="http://workbench-stage:8765/Default.aspx?RequestId={{ req.request_id }}"
+target="_blank"
+class="text-blue-400 hover:text-blue-300 font-medium">
+{{ req.request_id }}
+</a>
+{% else %}
+<a href="http://workbench.intra.infousa.com:8765/default.aspx?RequestID={{ req.request_id }}"
+target="_blank"
+class="text-blue-400 hover:text-blue-300 font-medium">
+{{ req.request_id }}
+</a>
+{% endif %}
+</td>
+
+<td>
+<span id="status-{{ req.id }}" class="text-gray-300">
+{{ req.status }}
+</span>
+</td>
+
+<td id="parent-{{ req.id }}" class="whitespace-nowrap">
+<span class="font-mono text-blue-400">-</span>
+<span class="text-gray-400 ml-2"></span>
+</td>
+
+<td id="child-{{ req.id }}" class="whitespace-nowrap">
+<span class="font-mono text-blue-400">-</span>
+<span class="text-gray-400 ml-2"></span>
+</td>
+
+<td id="user-{{ req.id }}">{{ req.submitter|default:"-" }}</td>
+
+<td id="started-{{ req.id }}">{{ req.started_at|default:"-" }}</td>
+<td id="completed-{{ req.id }}">{{ req.completed_at|default:"-" }}</td>
+
+<td id="duration-{{ req.id }}">-</td>
+
+<td class="flex gap-2">
+
+<form method="post" action="{% url 'run_request' req.id %}">
+{% csrf_token %}
+
+<button type="submit"
+id="run-btn-{{ req.id }}"
+class="run-btn bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs flex items-center gap-1"
+data-id="{{ req.id }}">
+
+<i class="fa-solid fa-play"></i>
+<span class="btn-text">Run</span>
+
+<svg class="spinner hidden w-3 h-3 animate-spin"
+xmlns="http://www.w3.org/2000/svg"
+fill="none"
+viewBox="0 0 24 24">
+<circle class="opacity-25"
+cx="12" cy="12" r="10"
+stroke="white"
+stroke-width="4"></circle>
+<path class="opacity-75"
+fill="white"
+d="M4 12a8 8 0 018-8v8z"></path>
+</svg>
+
+</button>
+
+</form>
+
+<button class="recheck-btn
+border border-gray-600
+hover:border-gray-400
+px-2 py-1 rounded text-xs"
+data-id="{{ req.id }}">
+<i class="fa-solid fa-rotate"></i>
+</button>
+
+<button class="delete-btn
+text-red-500 hover:text-red-400
+px-2 py-1 text-xs"
+data-id="{{ req.id }}">
+<i class="fa-solid fa-trash"></i>
+</button>
+
+</td>
+
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+</div>
+
+{% load static %}
+
+<div id="dateFilterPanel"
+class="hidden fixed right-6 top-24
+bg-gray-900 border border-gray-700
+rounded-lg p-3 shadow-xl w-72 z-50 text-xs">
+
+<div class="font-semibold mb-2">
+Filter Time
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+
+<!-- LEFT -->
+<div>
+
+<div class="text-gray-400 mb-1">From</div>
+<input id="timeFrom" type="datetime-local"
+class="w-full mb-2 bg-gray-800 border border-gray-700 rounded px-1 py-0.5">
+
+<div class="text-gray-400 mb-1">To</div>
+<input id="timeTo" type="datetime-local"
+class="w-full bg-gray-800 border border-gray-700 rounded px-1 py-0.5">
+
+</div>
+
+<!-- RIGHT -->
+<div>
+
+<div class="text-gray-400 mb-1">Quick</div>
+
+<div class="flex flex-col gap-1">
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="1h">
+Last 1 hour
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="6h">
+Last 6 hours
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="24h">
+Last 24 hours
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="today">
+Today
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="yesterday">
+Yesterday
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="flex justify-between mt-3">
+
+<button id="applyDateFilter"
+class="bg-blue-600 px-3 py-1 rounded">
+Apply
+</button>
+
+<button id="clearDateFilter"
+class="text-gray-400">
+Clear
+</button>
+
+</div>
+
+</div>
+
+<script src="{% static 'workbench/queue.js' %}"></script>
+<script src="{% static 'workbench/index.js' %}"></script>
+
+
+
+{% endblock %}

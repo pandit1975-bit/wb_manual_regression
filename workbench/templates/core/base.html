@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Workbench</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+</head>
+
+<body class="bg-gray-950 text-gray-100">
+
+<!-- HEADER -->
+<div class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+
+<div class="flex items-center gap-3">
+<i class="fa-solid fa-gears text-blue-500"></i>
+<h1 class="text-lg font-semibold tracking-wide">
+Workbench Automation
+</h1>
+</div>
+
+<div class="text-xs text-gray-400">
+Manual Regression Dashboard
+</div>
+
+</div>
+
+<!-- CONTENT -->
+<div class="p-6 max-w-[1800px] mx-auto">
+{% block content %}
+{% endblock %}
+</div>
+
+</body>
+</html>
