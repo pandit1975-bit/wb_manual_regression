@@ -295,19 +295,18 @@ updateRowStyle(id, data.status, data.current_status)
 
 const terminal =
 status === "completed" ||
-status === "failed";
+status === "failed" ||
+status === "abandoned" ||
+status === "errored";
+
+if(terminal){
+activeJobs.delete(id)
+stopDurationTimer(id)
+} else {
+activeJobs.add(id)
+}
 
 const onHold = child.includes("ON_HOLD");
-
-if(!terminal){
-activeJobs.add(id);
-}else{
-activeJobs.delete(id);
-
-if(typeof wbMarkFinished === "function"){
-wbMarkFinished(id)
-}
-}
 
 if(!terminal && !onHold){
 startDurationTimer(id, data.started_at)
@@ -405,20 +404,20 @@ updateStatus(id);
 
 });
 
+/////////////////////////////////////////////////////
+// SMART POLLING
+/////////////////////////////////////////////////////
+
 setInterval(()=>{
+
+if(activeJobs.size === 0) return;
+
 activeJobs.forEach(id=>updateStatus(id))
+
 },5000);
 
-window.addEventListener("load",()=>{
-document.querySelectorAll("tr[id^='row-']")
-.forEach(row=>{
-const id=row.id.replace("row-","")
-updateStatus(id)
-})
 setTimeout(updateCounters,500);
 setTimeout(updateRowNumbers,100);
-});
-
 });
 
 
@@ -483,26 +482,22 @@ updateStatus(id);
 });
 
 /////////////////////////////////////////////////////
-// POLLING
-/////////////////////////////////////////////////////
-
-setInterval(()=>{
-activeJobs.forEach(id=>updateStatus(id))
-},5000);
-
-/////////////////////////////////////////////////////
-// INITIAL LOAD
+// INITIAL LOAD (ONLY POLL ACTIVE JOBS)
 /////////////////////////////////////////////////////
 
 window.addEventListener("load",()=>{
+
 document.querySelectorAll("tr[id^='row-']")
 .forEach(row=>{
-const id=row.id.replace("row-","")
+const id = row.id.replace("row-","")
+
+// fetch once for ALL rows
 updateStatus(id)
 })
-setTimeout(updateCounters,500);
-});
 
+setTimeout(updateCounters,500)
+
+})
 
 /////////////////////////////////////////////////////
 // BADGES

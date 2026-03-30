@@ -211,19 +211,41 @@ class="text-blue-400 hover:text-blue-300 font-medium">
 </td>
 
 <td>
-<span id="status-{{ req.id }}" class="text-gray-300">
+<span id="status-{{ req.id }}">
+{% if req.overall_status %}
+{{ req.overall_status }}
+{% else %}
 {{ req.status }}
+{% endif %}
 </span>
 </td>
 
 <td id="parent-{{ req.id }}" class="whitespace-nowrap">
-<span class="font-mono text-blue-400">-</span>
-<span class="text-gray-400 ml-2"></span>
+{% if req.job_id %}
+<span class="font-mono text-blue-400">
+{{ req.job_id }}
+</span>
+<span class="text-gray-400 ml-2">
+{{ req.overall_status|default:"-" }}
+</span>
+{% else %}
+-
+{% endif %}
 </td>
 
 <td id="child-{{ req.id }}" class="whitespace-nowrap">
-<span class="font-mono text-blue-400">-</span>
-<span class="text-gray-400 ml-2"></span>
+{% if req.current_status %}
+{% with req.current_status.split as parts %}
+<span class="font-mono text-blue-400">
+{{ parts.0 }}
+</span>
+<span class="text-gray-400 ml-2">
+{{ parts|slice:"1:"|join:" " }}
+</span>
+{% endwith %}
+{% else %}
+-
+{% endif %}
 </td>
 
 <td id="user-{{ req.id }}">{{ req.submitter|default:"-" }}</td>
@@ -367,8 +389,7 @@ Clear
 </div>
 
 <script src="{% static 'workbench/queue.js' %}"></script>
-<script src="{% static 'workbench/index.js' %}"></script>
-<script src="{% static 'workbench/index.js' %}?v=3"></script>
+<script src="{% static 'workbench/index.js' %}?v={{ now|date:'U' }}"></script>
 
 
 
