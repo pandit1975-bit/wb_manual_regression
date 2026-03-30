@@ -60,24 +60,24 @@ Run Selected
 </div>
 
 <!-- COUNTERS -->
-<div class="flex gap-4 text-xs">
+<div class="flex gap-4 text-xm">
 
-<div class="text-gray-400">
+<div class="text-gray-300">
 Processing:
 <span id="count-running" class="text-blue-400 font-semibold">0</span>
 </div>
 
-<div class="text-gray-400">
+<div class="text-gray-300">
 Completed:
 <span id="count-completed" class="text-green-400 font-semibold">0</span>
 </div>
 
-<div class="text-gray-400">
+<div class="text-gray-300">
 Failed:
 <span id="count-failed" class="text-red-400 font-semibold">0</span>
 </div>
 
-<div class="text-gray-400">
+<div class="text-gray-300">
 On Hold:
 <span id="count-hold" class="text-yellow-400 font-semibold">0</span>
 </div>
@@ -96,7 +96,7 @@ On Hold:
 <th class="py-2">
 <input type="checkbox" id="selectAll">
 </th>
-
+<th class="w-10 text-center text-gray-500">#</th>
 <th onclick="sortTable(0)" class="cursor-pointer">Env</th>
 <th onclick="sortTable(1)" class="cursor-pointer">Request</th>
 <th onclick="sortTable(2)" class="cursor-pointer">Status</th>
@@ -124,7 +124,7 @@ class="ml-1 text-gray-500 hover:text-white">
 
 <!-- FILTER ROW -->
 <tr class="text-xs">
-
+<th></th>
 <th></th>
 
 <th>
@@ -178,6 +178,8 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full font-semibold
 <td>
 <input type="checkbox" class="row-select" value="{{ req.id }}">
 </td>
+
+<td class="row-number text-gray-200 font-bold text-sm text-center"></td>
 
 <td class="text-gray-400">{{ req.environment|upper }}</td>
 

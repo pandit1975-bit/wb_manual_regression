@@ -54,23 +54,24 @@ console.error("recheck error", err);
 
 function filterTable(){
 
-const env     = document.getElementById("filter-env")?.value.toUpperCase() || "";
-const request = document.getElementById("filter-request")?.value.toUpperCase() || "";
-const status  = document.getElementById("filter-status")?.value.toUpperCase() || "";
-const parent  = document.getElementById("filter-parent")?.value.toUpperCase() || "";
-const child   = document.getElementById("filter-child")?.value.toUpperCase() || "";
-const user    = document.getElementById("filter-user")?.value.toUpperCase() || "";
+const env     = document.getElementById("filter-env")?.value.toUpperCase() || ""
+const request = document.getElementById("filter-request")?.value.toUpperCase() || ""
+const status  = document.getElementById("filter-status")?.value.toUpperCase() || ""
+const parent  = document.getElementById("filter-parent")?.value.toUpperCase() || ""
+const child   = document.getElementById("filter-child")?.value.toUpperCase() || ""
+const user    = document.getElementById("filter-user")?.value.toUpperCase() || ""
 
 document.querySelectorAll("tbody tr").forEach(row=>{
 
-const tds = row.querySelectorAll("td");
+const tds = row.querySelectorAll("td")
 
-const envText     = tds[1]?.innerText.toUpperCase() || "";
-const requestText = tds[2]?.innerText.toUpperCase() || "";
-const statusText  = tds[3]?.innerText.toUpperCase() || "";
-const parentText  = tds[4]?.innerText.toUpperCase() || "";
-const childText   = tds[5]?.innerText.toUpperCase() || "";
-const userText    = tds[6]?.innerText.toUpperCase() || "";
+// shifted by +1
+const envText     = tds[2]?.innerText.toUpperCase() || ""
+const requestText = tds[3]?.innerText.toUpperCase() || ""
+const statusText  = tds[4]?.innerText.toUpperCase() || ""
+const parentText  = tds[5]?.innerText.toUpperCase() || ""
+const childText   = tds[6]?.innerText.toUpperCase() || ""
+const userText    = tds[7]?.innerText.toUpperCase() || ""
 
 const show =
 envText.includes(env) &&
@@ -78,14 +79,14 @@ requestText.includes(request) &&
 statusText.includes(status) &&
 parentText.includes(parent) &&
 childText.includes(child) &&
-userText.includes(user);
+userText.includes(user)
 
-row.style.display = show ? "" : "none";
+row.style.display = show ? "" : "none"
 
-});
+})
 
+updateRowNumbers()
 }
-
 
 /////////////////////////////////////////////////////
 // MOVE ROW
@@ -415,6 +416,7 @@ const id=row.id.replace("row-","")
 updateStatus(id)
 })
 setTimeout(updateCounters,500);
+setTimeout(updateRowNumbers,100);
 });
 
 });
@@ -713,3 +715,24 @@ return new Date(str.replace(/,/g,""));
 }
 
 })
+
+/////////////////////////////////////////////////////
+// UPDATE ROW NUMBER
+/////////////////////////////////////////////////////
+
+function updateRowNumbers(){
+
+let i = 1;
+
+document.querySelectorAll("tbody tr").forEach(row => {
+
+if(row.style.display === "none") return;
+
+const cell = row.querySelector(".row-number")
+if(cell){
+cell.textContent = i++
+}
+
+})
+
+}
