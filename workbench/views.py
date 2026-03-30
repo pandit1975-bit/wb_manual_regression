@@ -1,17 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils.timezone import localtime, now
-from .models import WorkbenchRequest
+from .models import RequestGroup, RequestGroupItem, WorkbenchRequest
 from .services.workbench_service import build_workbench_url
 from .services.submit_job_api import submit_job
 import threading
 from .services.tracker_service import track_job
 from django.conf import settings
+from .models import RequestGroup
+from .models import WorkbenchRequest
 
 # ========================
 # HOME PAGE
 # ========================
+from .models import RequestGroup
+
 def workbench_home(request):
+
     if request.method == "POST":
         env = request.POST.get("environment")
         request_id = request.POST.get("request_id")
@@ -22,6 +27,7 @@ def workbench_home(request):
             WorkbenchRequest.objects.create(
                 environment=env,
                 request_id=request_id,
+                group_id=id,
                 url=url,
                 status="pending"
             )
@@ -30,10 +36,13 @@ def workbench_home(request):
 
     records = WorkbenchRequest.objects.order_by("-created_at")
 
-    return render(request, "workbench/index.html", {
-        "records": records
-    })
+    # ADD THIS
+    groups = RequestGroup.objects.order_by("name")
 
+    return render(request, "workbench/index.html", {
+        "records": records,
+        "groups": groups   # <-- ADD THIS
+    })
 
 # ========================
 # RUN REQUEST
@@ -180,8 +189,115 @@ def get_status(request, pk):
 
 
 # ========================
-# DELETE
+# ADD REQUEST TO GROUP
+# ========================
+import json
+
+def group_add(request, id):
+
+    data = json.loads(request.body)
+
+    RequestGroupItem.objects.create(
+        group_id=id,
+        environment=data.get("environment"),
+        request_id=data.get("request_id")
+    )
+
+    return JsonResponse({"ok": True})
+
+# ========================
+# DELETE GROUP
+# ========================
+def group_delete(request, id):
+
+    group = RequestGroup.objects.get(id=id)
+
+    # delete dashboard rows
+    WorkbenchRequest.objects.filter(group=group).delete()
+
+    group.delete()
+
+    return JsonResponse({"ok":True})
+
+
+# ========================
+# DELETE ITEM
+# ========================
+def group_delete_item(request, id):
+
+    item = RequestGroupItem.objects.get(id=id)
+
+    WorkbenchRequest.objects.filter(
+        group=item.group,
+        environment=item.environment,
+        request_id=item.request_id
+    ).delete()
+
+    item.delete()
+
+    return JsonResponse({"ok":True})
+
+# ========================
+# CREATE MASTER GROUP PAGE
+# ========================
+
+def group_master(request):
+
+    if request.method == "POST" and "name" in request.POST:
+        name = request.POST.get("name")
+
+        if name:
+            RequestGroup.objects.create(name=name)
+
+        return redirect("group_master")
+
+    groups = RequestGroup.objects.prefetch_related("items").all()
+
+    return render(request,"workbench/group_master.html",{
+        "groups":groups
+    })
+
+# ========================
+# LOAD MASTER GROUP PAGE
+# ========================
+def load_group(request, id):
+
+    group = RequestGroup.objects.get(id=id)
+
+    created = []
+
+    for item in group.items.all():
+
+        # prevent duplicates
+        exists = WorkbenchRequest.objects.filter(
+            environment=item.environment,
+            request_id=item.request_id,
+            group=group
+        ).exists()
+
+        if not exists:
+
+            url = build_workbench_url(
+                item.environment,
+                item.request_id
+            )
+
+            WorkbenchRequest.objects.create(
+                environment=item.environment,
+                request_id=item.request_id,
+                url=url,
+                group=group,
+                status="pending"
+            )
+
+    return JsonResponse({"ok": True})
+
+# ========================
+# DELETE REQUEST
 # ========================
 def delete_request(request, pk):
-    WorkbenchRequest.objects.filter(pk=pk).delete()
-    return JsonResponse({"success": True})
+
+    obj = WorkbenchRequest.objects.get(pk=pk)
+    obj.delete()
+
+    return JsonResponse({"ok": True})

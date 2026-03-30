@@ -18,6 +18,64 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <body class="bg-gray-950 text-gray-100">
 
+<div class="flex min-h-screen">
+
+<!-- SIDEBAR -->
+<div class="w-60 bg-gray-900 border-r border-gray-800 flex flex-col">
+
+<!-- SIDEBAR HEADER -->
+<div class="px-4 py-4 border-b border-gray-800 flex items-center gap-2">
+<i class="fa-solid fa-gears text-blue-500"></i>
+<span class="font-semibold">Workbench</span>
+</div>
+
+<!-- NAV -->
+<div class="p-2 space-y-1 text-sm">
+
+<a href="/workbench/"
+class="flex items-center gap-2 px-3 py-2 rounded
+{% if request.path == '/workbench/' %}
+bg-gray-800 text-blue-400
+{% else %}
+hover:bg-gray-800 text-gray-300
+{% endif %}">
+<i class="fa-solid fa-table"></i>
+Dashboard
+</a>
+
+<a href="/workbench/groups/"
+class="flex items-center gap-2 px-3 py-2 rounded
+{% if 'groups' in request.path %}
+bg-gray-800 text-blue-400
+{% else %}
+hover:bg-gray-800 text-gray-300
+{% endif %}">
+<i class="fa-solid fa-layer-group"></i>
+Group Maintenance
+</a>
+
+<!-- future items -->
+<div class="border-t border-gray-800 my-2"></div>
+
+<div class="text-xs text-gray-500 px-3 pt-2">
+Coming Soon
+</div>
+
+<div class="px-3 py-2 text-gray-600">
+<i class="fa-solid fa-clock mr-2"></i>Scheduler
+</div>
+
+<div class="px-3 py-2 text-gray-600">
+<i class="fa-solid fa-chart-line mr-2"></i>History
+</div>
+
+</div>
+
+</div>
+
+<!-- MAIN -->
+<div class="flex-1 flex flex-col">
+
 <!-- HEADER -->
 <div class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
 
@@ -35,9 +93,13 @@ Manual Regression Dashboard
 </div>
 
 <!-- CONTENT -->
-<div class="p-6 max-w-[1800px] mx-auto">
+<div class="p-6 max-w-[1800px] mx-auto w-full">
 {% block content %}
 {% endblock %}
+</div>
+
+</div>
+
 </div>
 
 </body>

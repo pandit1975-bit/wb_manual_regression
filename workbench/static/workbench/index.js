@@ -736,3 +736,40 @@ cell.textContent = i++
 })
 
 }
+
+/////////////////////////////////////////////////////
+// LOAD GROUP
+/////////////////////////////////////////////////////
+
+document.getElementById("loadGroup")
+?.addEventListener("change", async function(){
+
+const id = this.value
+if(!id) return
+
+await fetch(`/workbench/groups/load/${id}/`)
+
+location.reload()
+
+})
+
+/////////////////////////////////////////////////////
+// DELETE DASHBOARD ROW
+/////////////////////////////////////////////////////
+
+document.addEventListener("click", function(e){
+
+const btn = e.target.closest(".delete-btn")
+if(!btn) return
+
+const id = btn.dataset.id
+
+fetch(`/workbench/delete/${id}/`,{
+method:"POST",
+headers:{
+"X-CSRFToken": getCSRF()
+}
+})
+.then(()=>location.reload())
+
+})

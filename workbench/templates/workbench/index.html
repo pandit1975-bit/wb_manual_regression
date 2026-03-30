@@ -57,6 +57,17 @@ class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm flex items-c
 Run Selected
 </button>
 
+<select id="loadGroup"
+class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm">
+
+<option value="">Load Group</option>
+
+{% for g in groups %}
+<option value="{{g.id}}">{{g.name}}</option>
+{% endfor %}
+
+</select>
+
 </div>
 
 <!-- COUNTERS -->
