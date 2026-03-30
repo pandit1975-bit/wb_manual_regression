@@ -201,7 +201,25 @@ fetch(`/status/${id}/`)
 
 if(!data) return;
 
-document.getElementById(`status-${id}`).innerHTML = statusBadge(data.status);
+const parentStatusText = (data.overall_status || "").toUpperCase()
+const childStatusText  = (data.current_status || "").toUpperCase()
+
+let displayStatus = parentStatusText
+
+if(childStatusText.includes("ON_HOLD")){
+displayStatus = "ON_HOLD"
+}
+else if(childStatusText.includes("ERRORED")){
+displayStatus = "ERRORED"
+}
+else if(childStatusText.includes("ABANDONED")){
+displayStatus = "ABANDONED"
+}
+else if(childStatusText.includes("FAILED")){
+displayStatus = "FAILED"
+}
+
+document.getElementById(`status-${id}`).innerHTML = statusBadge(displayStatus);
 
 const parentEl = document.getElementById(`parent-${id}`);
 const childEl  = document.getElementById(`child-${id}`);
@@ -490,18 +508,41 @@ setTimeout(updateCounters,500);
 
 function statusBadge(text){
 
-const t = (text || "").toUpperCase();
+const t = (text || "").toUpperCase()
 
-if(t.includes("RUNNING") || t.includes("PROCESSING"))
-return `<span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">Running</span>`;
+// PROCESSING
+if(t.includes("PROCESSING"))
+return `<span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">Processing</span>`
 
+// RUNNING
+if(t.includes("RUNNING"))
+return `<span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">Running</span>`
+
+// COMPLETED
 if(t.includes("COMPLETED"))
-return `<span class="bg-green-600/20 text-green-400 px-2 py-0.5 rounded">Completed</span>`;
+return `<span class="bg-green-600/20 text-green-400 px-2 py-0.5 rounded">Completed</span>`
 
+// ERRORED
+if(t.includes("ERRORED"))
+return `<span class="bg-red-600/20 text-red-400 px-2 py-0.5 rounded">Errored</span>`
+
+// ABANDONED
+if(t.includes("ABANDONED"))
+return `<span class="bg-red-600/20 text-red-400 px-2 py-0.5 rounded">Abandoned</span>`
+
+// FAILED
 if(t.includes("FAILED"))
-return `<span class="bg-red-600/20 text-red-400 px-2 py-0.5 rounded">Failed</span>`;
+return `<span class="bg-red-600/20 text-red-400 px-2 py-0.5 rounded">Failed</span>`
 
-return text;
+// ON HOLD
+if(t.includes("ON_HOLD") || t.includes("ON HOLD"))
+return `<span class="bg-yellow-600/20 text-yellow-400 px-2 py-0.5 rounded">On Hold</span>`
+
+// QUEUED
+if(t.includes("QUEUED"))
+return `<span class="bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded">Queued</span>`
+
+return text
 }
 
 /////////////////////////////////////////////////////
