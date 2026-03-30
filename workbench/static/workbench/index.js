@@ -1,29 +1,76 @@
+/////////////////////////////////////////////////////
+// GLOBALS
+/////////////////////////////////////////////////////
+
 let activeJobs = new Set();
 let durationTimers = {};
 
+/////////////////////////////////////////////////////
+// CSRF
+/////////////////////////////////////////////////////
+
+function getCSRF(){
+return document.querySelector("[name=csrfmiddlewaretoken]").value;
+}
 
 /////////////////////////////////////////////////////
-// HEADER FILTERS
+// GLOBAL CLICK HANDLER (RECHECK)
 /////////////////////////////////////////////////////
+
+document.addEventListener("click", async function(e){
+
+const btn = e.target.closest(".recheck-btn");
+if(!btn) return;
+
+const id = btn.dataset.id;
+
+console.log("RECHECK CLICK", id);
+
+try{
+
+await fetch(`/workbench/recheck/${id}/`,{
+method:"POST",
+credentials:"same-origin",
+headers:{
+"X-CSRFToken": getCSRF(),
+"X-Requested-With":"XMLHttpRequest"
+}
+});
+
+moveRowToTop(id);
+activeJobs.add(id);
+updateStatus(id);
+
+}catch(err){
+console.error("recheck error", err);
+}
+
+});
+
+
+/////////////////////////////////////////////////////
+// FILTER TABLE
+/////////////////////////////////////////////////////
+
 function filterTable(){
 
-const env     = document.getElementById("filter-env")?.value.toUpperCase() || ""
-const request = document.getElementById("filter-request")?.value.toUpperCase() || ""
-const status  = document.getElementById("filter-status")?.value.toUpperCase() || ""
-const parent  = document.getElementById("filter-parent")?.value.toUpperCase() || ""
-const child   = document.getElementById("filter-child")?.value.toUpperCase() || ""
-const user    = document.getElementById("filter-user")?.value.toUpperCase() || ""
+const env     = document.getElementById("filter-env")?.value.toUpperCase() || "";
+const request = document.getElementById("filter-request")?.value.toUpperCase() || "";
+const status  = document.getElementById("filter-status")?.value.toUpperCase() || "";
+const parent  = document.getElementById("filter-parent")?.value.toUpperCase() || "";
+const child   = document.getElementById("filter-child")?.value.toUpperCase() || "";
+const user    = document.getElementById("filter-user")?.value.toUpperCase() || "";
 
 document.querySelectorAll("tbody tr").forEach(row=>{
 
-const tds = row.querySelectorAll("td")
+const tds = row.querySelectorAll("td");
 
-const envText     = tds[1]?.innerText.toUpperCase() || ""
-const requestText = tds[2]?.innerText.toUpperCase() || ""
-const statusText  = tds[3]?.innerText.toUpperCase() || ""
-const parentText  = tds[4]?.innerText.toUpperCase() || ""
-const childText   = tds[5]?.innerText.toUpperCase() || ""
-const userText    = tds[6]?.innerText.toUpperCase() || ""
+const envText     = tds[1]?.innerText.toUpperCase() || "";
+const requestText = tds[2]?.innerText.toUpperCase() || "";
+const statusText  = tds[3]?.innerText.toUpperCase() || "";
+const parentText  = tds[4]?.innerText.toUpperCase() || "";
+const childText   = tds[5]?.innerText.toUpperCase() || "";
+const userText    = tds[6]?.innerText.toUpperCase() || "";
 
 const show =
 envText.includes(env) &&
@@ -31,15 +78,28 @@ requestText.includes(request) &&
 statusText.includes(status) &&
 parentText.includes(parent) &&
 childText.includes(child) &&
-userText.includes(user)
+userText.includes(user);
 
-row.style.display = show ? "" : "none"
+row.style.display = show ? "" : "none";
 
-})
+});
 
 }
+
+
 /////////////////////////////////////////////////////
-// UPDATE COUNTERS
+// MOVE ROW
+/////////////////////////////////////////////////////
+
+function moveRowToTop(id){
+const row = document.getElementById(`row-${id}`);
+const tbody = document.querySelector("tbody");
+if(row && tbody) tbody.prepend(row);
+}
+
+
+/////////////////////////////////////////////////////
+// COUNTERS
 /////////////////////////////////////////////////////
 
 function updateCounters(){
@@ -68,15 +128,6 @@ document.getElementById("count-failed").innerText = failed;
 document.getElementById("count-hold").innerText = hold;
 }
 
-/////////////////////////////////////////////////////
-// MOVE ROW
-/////////////////////////////////////////////////////
-
-function moveRowToTop(id){
-const row = document.getElementById(`row-${id}`);
-const tbody = document.querySelector("tbody");
-if(row && tbody) tbody.prepend(row);
-}
 
 /////////////////////////////////////////////////////
 // BUILD JOB URL
@@ -137,24 +188,29 @@ ${childJid}
 : "-"
 }
 
+
 /////////////////////////////////////////////////////
 // UPDATE STATUS
 /////////////////////////////////////////////////////
 
-function updateStatus(id) {
+function updateStatus(id){
 
 fetch(`/status/${id}/`)
-.then(res => res.json())
-.then(data => {
+.then(res=>res.json())
+.then(data=>{
 
 if(!data) return;
 
-document.getElementById(`status-${id}`).innerHTML = statusBadge(data.status)
+document.getElementById(`status-${id}`).innerHTML = statusBadge(data.status);
+
+const parentEl = document.getElementById(`parent-${id}`);
+const childEl  = document.getElementById(`child-${id}`);
+
+//////////////////////////////////////////////////
+// ADD THIS BLOCK (job url builder)
+//////////////////////////////////////////////////
 
 const env = (data.environment || "stage").toLowerCase()
-
-const parentEl = document.getElementById(`parent-${id}`)
-const childEl  = document.getElementById(`child-${id}`)
 
 function jobUrl(jid){
 if(!jid) return "#"
@@ -169,8 +225,8 @@ return `http://stagewbstatus/JobRequest/JobRequest/?JobID=${jid}`
 // PARENT
 //////////////////////////////////////////////////
 
-const parentJid = data.job_id
-const parentStatus = data.overall_status || "-"
+const parentJid = data.job_id;
+const parentStatus = data.overall_status || "-";
 
 if(parentJid){
 parentEl.innerHTML =
@@ -179,22 +235,22 @@ target="_blank"
 class="text-blue-400 hover:underline font-mono">
 ${parentJid}
 </a>
-<span class="text-gray-400 ml-2">${parentStatus}</span>`
+<span class="text-gray-400 ml-2">${parentStatus}</span>`;
 }else{
-parentEl.innerHTML = "-"
+parentEl.innerHTML="-";
 }
 
 //////////////////////////////////////////////////
 // SUB
 //////////////////////////////////////////////////
 
-let childJid = null
-let childStatus = "-"
+let childJid = null;
+let childStatus = "-";
 
 if(data.current_status){
-const parts = data.current_status.split(" ")
-childJid = parts[0]
-childStatus = parts.slice(1).join(" ")
+const parts = data.current_status.split(" ");
+childJid = parts[0];
+childStatus = parts.slice(1).join(" ");
 }
 
 if(childJid){
@@ -204,12 +260,10 @@ target="_blank"
 class="text-blue-400 hover:underline font-mono">
 ${childJid}
 </a>
-<span class="text-gray-400 ml-2">${childStatus}</span>`
+<span class="text-gray-400 ml-2">${childStatus}</span>`;
 }else{
-childEl.innerHTML = "-"
+childEl.innerHTML="-";
 }
-
-//////////////////////////////////////////////////
 
 document.getElementById(`user-${id}`).innerText = data.submitter || "-";
 document.getElementById(`started-${id}`).innerText = data.started_at || "-";
@@ -217,6 +271,7 @@ document.getElementById(`completed-${id}`).innerText = data.completed_at || "-";
 
 const status = (data.status || "").toLowerCase();
 const child  = (data.current_status || "").toUpperCase();
+
 updateRowStyle(id, data.status, data.current_status)
 
 const terminal =
@@ -225,18 +280,16 @@ status === "failed";
 
 const onHold = child.includes("ON_HOLD");
 
-// ✅ KEEP polling until terminal
 if(!terminal){
-    activeJobs.add(id);
+activeJobs.add(id);
 }else{
-    activeJobs.delete(id);
+activeJobs.delete(id);
 
-    if(typeof wbMarkFinished === "function"){
-        wbMarkFinished(id)
-    }
+if(typeof wbMarkFinished === "function"){
+wbMarkFinished(id)
+}
 }
 
-// ✅ Duration logic
 if(!terminal && !onHold){
 startDurationTimer(id, data.started_at)
 }else{
@@ -247,6 +300,7 @@ document.getElementById(`duration-${id}`).innerText = data.duration || "-";
 updateCounters();
 
 });
+
 }
 
 /////////////////////////////////////////////////////
@@ -294,9 +348,59 @@ delete durationTimers[id]
 
 document.addEventListener("DOMContentLoaded", function () {
 
-function getCSRF(){
-return document.querySelector("[name=csrfmiddlewaretoken]").value;
+const selectAll = document.getElementById("selectAll");
+
+if(selectAll){
+selectAll.addEventListener("change", function(){
+document.querySelectorAll(".row-select")
+.forEach(cb => cb.checked = this.checked)
+});
 }
+
+const runSelected = document.getElementById("runSelected");
+
+if(runSelected){
+runSelected.addEventListener("click", function(){
+document.querySelectorAll(".row-select:checked").forEach(cb=>{
+const id = cb.value;
+wbAddToQueue(id);
+updateStatus(id);
+});
+});
+}
+
+document.querySelectorAll(".run-btn").forEach(btn => {
+
+const form = btn.closest("form");
+if(!form) return;
+
+form.addEventListener("submit", function(){
+
+const id = btn.dataset.id;
+
+activeJobs.add(id);
+moveRowToTop(id);
+updateStatus(id);
+
+});
+
+});
+
+setInterval(()=>{
+activeJobs.forEach(id=>updateStatus(id))
+},5000);
+
+window.addEventListener("load",()=>{
+document.querySelectorAll("tr[id^='row-']")
+.forEach(row=>{
+const id=row.id.replace("row-","")
+updateStatus(id)
+})
+setTimeout(updateCounters,500);
+});
+
+});
+
 
 /////////////////////////////////////////////////////
 // SELECT ALL
@@ -379,25 +483,25 @@ updateStatus(id)
 setTimeout(updateCounters,500);
 });
 
-});
+
+/////////////////////////////////////////////////////
+// BADGES
+/////////////////////////////////////////////////////
 
 function statusBadge(text){
 
-const t = (text || "").toUpperCase()
+const t = (text || "").toUpperCase();
 
 if(t.includes("RUNNING") || t.includes("PROCESSING"))
-return `<span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">Running</span>`
+return `<span class="bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">Running</span>`;
 
 if(t.includes("COMPLETED"))
-return `<span class="bg-green-600/20 text-green-400 px-2 py-0.5 rounded">Completed</span>`
+return `<span class="bg-green-600/20 text-green-400 px-2 py-0.5 rounded">Completed</span>`;
 
 if(t.includes("FAILED"))
-return `<span class="bg-red-600/20 text-red-400 px-2 py-0.5 rounded">Failed</span>`
+return `<span class="bg-red-600/20 text-red-400 px-2 py-0.5 rounded">Failed</span>`;
 
-if(t.includes("QUEUED"))
-return `<span class="bg-purple-600/20 text-purple-400 px-2 py-0.5 rounded">Queued</span>`
-
-return text
+return text;
 }
 
 /////////////////////////////////////////////////////
@@ -409,7 +513,6 @@ function updateRowStyle(id, status, child){
 const row = document.getElementById(`row-${id}`)
 if(!row) return
 
-// reset
 row.classList.remove(
 "bg-blue-900/20",
 "bg-purple-900/20",
@@ -424,15 +527,12 @@ const c = (child || "").toUpperCase()
 if(s.includes("RUNNING") || s.includes("PROCESSING")){
 row.classList.add("bg-blue-900/20","animate-pulse")
 }
-
 else if(s.includes("QUEUED")){
 row.classList.add("bg-purple-900/20")
 }
-
 else if(s.includes("COMPLETED")){
 row.classList.add("bg-green-900/10")
 }
-
 else if(s.includes("FAILED") || s.includes("ABANDONED")){
 row.classList.add("bg-red-900/20")
 }
@@ -441,6 +541,7 @@ if(c.includes("ON_HOLD")){
 row.classList.add("bg-yellow-900/20")
 }
 }
+
 
 /////////////////////////////////////////////////////
 // DATE FILTER
@@ -505,6 +606,7 @@ document.getElementById("timeTo").value   = toLocal(now)
 })
 
 })
+
 
 /////////////////////////////////////////////////////
 // APPLY
