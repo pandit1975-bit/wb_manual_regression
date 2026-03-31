@@ -99,7 +99,7 @@ data-id="{{i.id}}">
 <!-- SERVICES -->
 <div class="flex flex-wrap gap-1 mt-2">
 
-{% for s in i.services.all %}
+{% for s in i.services.all|dictsort:"name" %}
 <span class="service-chip flex items-center gap-1">
 {{ s.name }}
 
