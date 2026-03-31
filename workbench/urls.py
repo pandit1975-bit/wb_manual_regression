@@ -18,5 +18,10 @@ urlpatterns = [
     path("groups/delete/<int:id>/", views.group_delete),
     path("groups/delete-item/<int:id>/", views.group_delete_item),
     path("groups/load/<int:id>/", views.load_group),   # THIS ONE
+    path("groups/<int:id>/add-service/", views.add_group_service),
+    path("services/catalog/", views.service_catalog),
+    path("groups/<int:id>/remove-service/", views.remove_group_service),
+    path("items/<int:id>/add-service/", views.add_item_service),
+    path("items/<int:id>/remove-service/", views.remove_item_service),
 
 ]

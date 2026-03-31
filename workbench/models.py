@@ -2,10 +2,28 @@ from django.db import models
 
 
 # =========================
+# SERVICES MASTER
+# =========================
+class Service(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+# =========================
 # REQUEST GROUP
 # =========================
 class RequestGroup(models.Model):
     name = models.CharField(max_length=100)
+
+    # default services for group
+    services = models.ManyToManyField(
+        Service,
+        blank=True,
+        related_name="groups"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -24,6 +42,12 @@ class RequestGroupItem(models.Model):
 
     environment = models.CharField(max_length=10)
     request_id = models.CharField(max_length=50)
+
+    services = models.ManyToManyField(
+        Service,
+        blank=True,
+        related_name="group_items"
+    )
 
     def __str__(self):
         return f"{self.group.name} - {self.request_id}"
@@ -49,12 +73,19 @@ class WorkbenchRequest(models.Model):
     environment = models.CharField(max_length=10, choices=ENV_CHOICES)
     request_id = models.CharField(max_length=50)
 
-    # 🔥 LINK TO GROUP (IMPORTANT)
+    # group link
     group = models.ForeignKey(
         RequestGroup,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
+        related_name="requests"
+    )
+
+    # request-level services (override)
+    services = models.ManyToManyField(
+        Service,
+        blank=True,
         related_name="requests"
     )
 

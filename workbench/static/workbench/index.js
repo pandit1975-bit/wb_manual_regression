@@ -6,11 +6,58 @@ let activeJobs = new Set();
 let durationTimers = {};
 
 /////////////////////////////////////////////////////
+// LOAD SERVICES FILTER DROPDOWN
+/////////////////////////////////////////////////////
+
+async function loadServicesFilter(){
+
+const select = document.getElementById("filter-services")
+if(!select) return
+
+const res = await fetch("/workbench/services/catalog/")
+const data = await res.json()
+
+// clear existing
+select.innerHTML = '<option value="">All</option>'
+
+// sort ASC
+const services = data.services.sort()
+
+services.forEach(s=>{
+const opt = document.createElement("option")
+opt.value = s
+opt.textContent = s
+select.appendChild(opt)
+})
+
+}
+
+/////////////////////////////////////////////////////
 // CSRF
 /////////////////////////////////////////////////////
 
 function getCSRF(){
 return document.querySelector("[name=csrfmiddlewaretoken]").value;
+}
+
+
+/////////////////////////////////////////////////////
+// SHORT DATE
+/////////////////////////////////////////////////////
+
+
+function shortDT(str){
+if(!str || str==="-" ) return "-"
+
+const d = new Date(str)
+
+return d.toLocaleString("en-US",{
+month:"2-digit",
+day:"2-digit",
+hour:"2-digit",
+minute:"2-digit",
+hour12:false
+})
 }
 
 /////////////////////////////////////////////////////
@@ -54,27 +101,32 @@ console.error("recheck error", err);
 
 function filterTable(){
 
-const env     = document.getElementById("filter-env")?.value.toUpperCase() || ""
-const request = document.getElementById("filter-request")?.value.toUpperCase() || ""
-const status  = document.getElementById("filter-status")?.value.toUpperCase() || ""
-const parent  = document.getElementById("filter-parent")?.value.toUpperCase() || ""
-const child   = document.getElementById("filter-child")?.value.toUpperCase() || ""
-const user    = document.getElementById("filter-user")?.value.toUpperCase() || ""
+const env      = document.getElementById("filter-env")?.value.toUpperCase() || ""
+const group    = document.getElementById("filter-group")?.value.toUpperCase() || ""
+const services = document.getElementById("filter-services")?.value.toUpperCase() || ""
+const request  = document.getElementById("filter-request")?.value.toUpperCase() || ""
+const status   = document.getElementById("filter-status")?.value.toUpperCase() || ""
+const parent   = document.getElementById("filter-parent")?.value.toUpperCase() || ""
+const child    = document.getElementById("filter-child")?.value.toUpperCase() || ""
+const user     = document.getElementById("filter-user")?.value.toUpperCase() || ""
 
 document.querySelectorAll("tbody tr").forEach(row=>{
 
 const tds = row.querySelectorAll("td")
 
-// shifted by +1
-const envText     = tds[2]?.innerText.toUpperCase() || ""
-const requestText = tds[3]?.innerText.toUpperCase() || ""
-const statusText  = tds[4]?.innerText.toUpperCase() || ""
-const parentText  = tds[5]?.innerText.toUpperCase() || ""
-const childText   = tds[6]?.innerText.toUpperCase() || ""
-const userText    = tds[7]?.innerText.toUpperCase() || ""
+const envText      = tds[2]?.innerText.toUpperCase() || ""
+const groupText    = tds[3]?.innerText.toUpperCase() || ""
+const servicesText = tds[4]?.innerText.toUpperCase() || ""
+const requestText  = tds[5]?.innerText.toUpperCase() || ""
+const statusText   = tds[6]?.innerText.toUpperCase() || ""
+const parentText   = tds[7]?.innerText.toUpperCase() || ""
+const childText    = tds[8]?.innerText.toUpperCase() || ""
+const userText     = tds[9]?.innerText.toUpperCase() || ""
 
 const show =
 envText.includes(env) &&
+groupText.includes(group) &&
+servicesText.includes(services) &&
 requestText.includes(request) &&
 statusText.includes(status) &&
 parentText.includes(parent) &&
@@ -285,24 +337,27 @@ childEl.innerHTML="-";
 }
 
 document.getElementById(`user-${id}`).innerText = data.submitter || "-";
-document.getElementById(`started-${id}`).innerText = data.started_at || "-";
-document.getElementById(`completed-${id}`).innerText = data.completed_at || "-";
+document.getElementById(`started-${id}`).innerText = shortDT(data.started_at);
+document.getElementById(`completed-${id}`).innerText = shortDT(data.completed_at);
 
 const status = (data.status || "").toLowerCase();
 const child  = (data.current_status || "").toUpperCase();
 
 updateRowStyle(id, data.status, data.current_status)
 
+const finalText =
+(parentStatusText + " " + childStatusText).toUpperCase()
+
 const terminal =
-status === "completed" ||
-status === "failed" ||
-status === "abandoned" ||
-status === "errored";
+finalText.includes("COMPLETED") ||
+finalText.includes("FAILED") ||
+finalText.includes("ABANDONED") ||
+finalText.includes("ERRORED")
 
 if(terminal){
 activeJobs.delete(id)
 stopDurationTimer(id)
-} else {
+}else{
 activeJobs.add(id)
 }
 
@@ -487,12 +542,27 @@ updateStatus(id);
 
 window.addEventListener("load",()=>{
 
+loadServicesFilter()
+
 document.querySelectorAll("tr[id^='row-']")
 .forEach(row=>{
+
 const id = row.id.replace("row-","")
 
-// fetch once for ALL rows
+const statusText =
+row.querySelector("[id^='status-']")
+?.innerText
+?.toUpperCase() || ""
+
+if(
+statusText.includes("RUNNING") ||
+statusText.includes("PROCESSING") ||
+statusText.includes("QUEUED")
+){
+activeJobs.add(id)
 updateStatus(id)
+}
+
 })
 
 setTimeout(updateCounters,500)
@@ -768,3 +838,6 @@ headers:{
 .then(()=>location.reload())
 
 })
+
+
+

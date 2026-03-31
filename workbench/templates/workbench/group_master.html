@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% load static %}
 {% block content %}
 
 <h2 class="text-xl mb-4">Request Groups</h2>
@@ -65,35 +66,95 @@ Add
 </div>
 
 <!-- REQUEST LIST -->
-<div class="space-y-1">
+<div class="space-y-2">
 
 {% for i in g.items.all %}
-<div class="flex justify-between items-center text-sm bg-gray-800 px-2 py-1 rounded">
+<div class="bg-gray-800 px-3 py-2 rounded">
+
+<div class="flex justify-between items-center text-sm">
 
 <div>
 <span class="text-gray-400">{{i.environment|upper}}</span>
 <span class="ml-2 text-blue-400 font-mono">{{i.request_id}}</span>
 </div>
 
+<div class="flex items-center gap-3">
+
 <button type="button"
-class="delete-group-item
-text-yellow-400 hover:text-yellow-300
-bg-yellow-900/20 hover:bg-yellow-900/30
-px-2 py-1 rounded text-xs"
+class="add-item-service text-blue-400 hover:text-blue-300 text-xs"
+data-id="{{i.id}}">
++ Service
+</button>
+
+<button type="button"
+class="delete-group-item text-yellow-400 hover:text-yellow-300"
 data-id="{{i.id}}">
 <i class="fa-solid fa-trash"></i>
 </button>
 
 </div>
+
+</div>
+
+<!-- SERVICES -->
+<div class="flex flex-wrap gap-1 mt-2">
+
+{% for s in i.services.all %}
+<span class="service-chip flex items-center gap-1">
+{{ s.name }}
+
+<i class="fa-solid fa-xmark
+delete-item-service
+cursor-pointer text-gray-400 hover:text-red-400"
+data-id="{{i.id}}"
+data-name="{{s.name}}">
+</i>
+
+</span>
+{% empty %}
+<span class="text-gray-500 text-xs">No services</span>
 {% endfor %}
 
 </div>
 
 </div>
+{% endfor %}
+
+</div>  <!-- end request list -->
+
+</div>  <!-- end group card -->
 
 {% endfor %}
 
-{% load static %}
+
+<!-- SERVICE POPUP -->
+<div id="servicePopup"
+class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+
+<div class="bg-gray-900 p-4 rounded w-96">
+
+<div class="mb-2 font-semibold">Select Service</div>
+
+<select id="serviceSelect"
+multiple
+class="w-full bg-gray-800 border border-gray-700 p-2 rounded mb-3">
+</select>
+
+<div class="flex justify-end gap-2">
+<button id="cancelService"
+class="px-3 py-1 bg-gray-700 rounded">
+Cancel
+</button>
+
+<button id="saveService"
+class="px-3 py-1 bg-blue-600 rounded">
+Add
+</button>
+</div>
+
+</div>
+</div>
+
 <script src="{% static 'workbench/group_maintenance.js' %}"></script>
 
 {% endblock %}

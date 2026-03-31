@@ -1,19 +1,34 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils.timezone import localtime, now
-from .models import RequestGroup, RequestGroupItem, WorkbenchRequest
+from django.conf import settings
+
+import threading
+
+from .models import (
+    WorkbenchRequest,
+    RequestGroup,
+    RequestGroupItem,
+    Service,
+)
+
 from .services.workbench_service import build_workbench_url
 from .services.submit_job_api import submit_job
-import threading
 from .services.tracker_service import track_job
-from django.conf import settings
-from .models import RequestGroup
-from .models import WorkbenchRequest
+from .services.service_catalog import SERVICES
+
+# ========================
+# FETCH DATA FROM service_catalog.py
+# ========================
+
+def service_catalog(request):
+    return JsonResponse({"services": SERVICES})
+
 
 # ========================
 # HOME PAGE
 # ========================
-from .models import RequestGroup
+
 
 def workbench_home(request):
 
@@ -193,15 +208,27 @@ def get_status(request, pk):
 # ========================
 import json
 
+import json
+
 def group_add(request, id):
 
     data = json.loads(request.body)
 
-    RequestGroupItem.objects.create(
+    env = data.get("environment")
+    req = data.get("request_id").strip()
+
+    exists = RequestGroupItem.objects.filter(
         group_id=id,
-        environment=data.get("environment"),
-        request_id=data.get("request_id")
-    )
+        environment=env,
+        request_id=req
+    ).exists()
+
+    if not exists:
+        RequestGroupItem.objects.create(
+            group_id=id,
+            environment=env,
+            request_id=req
+        )
 
     return JsonResponse({"ok": True})
 
@@ -264,31 +291,25 @@ def load_group(request, id):
 
     group = RequestGroup.objects.get(id=id)
 
-    created = []
-
     for item in group.items.all():
 
-        # prevent duplicates
-        exists = WorkbenchRequest.objects.filter(
+        url = build_workbench_url(
+            item.environment,
+            item.request_id
+        )
+
+        req, created = WorkbenchRequest.objects.get_or_create(
             environment=item.environment,
             request_id=item.request_id,
-            group=group
-        ).exists()
+            group=group,
+            defaults={
+                "url": url,
+                "status": "pending"
+            }
+        )
 
-        if not exists:
-
-            url = build_workbench_url(
-                item.environment,
-                item.request_id
-            )
-
-            WorkbenchRequest.objects.create(
-                environment=item.environment,
-                request_id=item.request_id,
-                url=url,
-                group=group,
-                status="pending"
-            )
+        # ALWAYS SYNC SERVICES
+        req.services.set(item.services.all())
 
     return JsonResponse({"ok": True})
 
@@ -301,3 +322,100 @@ def delete_request(request, pk):
     obj.delete()
 
     return JsonResponse({"ok": True})
+
+def add_group_service(request, id):
+
+    group = RequestGroup.objects.get(id=id)
+
+    data = json.loads(request.body)
+    name = data.get("name")
+
+    service, _ = Service.objects.get_or_create(name=name)
+
+    group.services.add(service)
+
+    return JsonResponse({"ok": True})
+
+
+# ========================
+# REMOVE SERVICES FROM GROOUP MAINTENANCE PAGE
+# ========================
+
+def remove_group_service(request, id):
+
+    import json
+
+    group = RequestGroup.objects.get(id=id)
+
+    data = json.loads(request.body)
+    name = data.get("name")
+
+    try:
+        service = Service.objects.get(name=name)
+        group.services.remove(service)
+    except Service.DoesNotExist:
+        pass
+
+    return JsonResponse({"ok": True})
+
+
+# ========================
+# ADD SERVICES IN THE REQUEST
+# ========================
+def add_item_service(request, id):
+
+    import json
+
+    item = RequestGroupItem.objects.get(id=id)
+
+    data = json.loads(request.body)
+    name = data.get("name")
+
+    service,_ = Service.objects.get_or_create(name=name)
+
+    item.services.add(service)
+
+    # 🔥 sync dashboard
+    WorkbenchRequest.objects.filter(
+        group=item.group,
+        environment=item.environment,
+        request_id=item.request_id
+    ).update()
+
+    for r in WorkbenchRequest.objects.filter(
+        group=item.group,
+        environment=item.environment,
+        request_id=item.request_id
+    ):
+        r.services.add(service)
+
+    return JsonResponse({"ok":True})
+
+# ========================
+# REMOVE SERVICES FROM THE REQUEST
+# ========================
+def remove_item_service(request, id):
+
+    import json
+
+    item = RequestGroupItem.objects.get(id=id)
+
+    data = json.loads(request.body)
+    name = data.get("name")
+
+    try:
+        service = Service.objects.get(name=name)
+        item.services.remove(service)
+
+        # 🔥 sync dashboard
+        for r in WorkbenchRequest.objects.filter(
+            group=item.group,
+            environment=item.environment,
+            request_id=item.request_id
+        ):
+            r.services.remove(service)
+
+    except Service.DoesNotExist:
+        pass
+
+    return JsonResponse({"ok":True})

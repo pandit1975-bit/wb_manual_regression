@@ -14,6 +14,123 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+<!-- SERVICES STYLES -->
+<style>
+
+.sidebar-collapsed{
+width:70px !important;
+}
+
+/* hide ALL sidebar text */
+.sidebar-collapsed span{
+display:none;
+}
+
+/* hide coming soon label */
+.sidebar-collapsed .coming-soon{
+display:none;
+}
+
+/* center icons */
+.sidebar-collapsed a,
+.sidebar-collapsed div{
+justify-content:center;
+}
+
+/* remove left padding */
+.sidebar-collapsed .p-2 > *{
+padding-left:0 !important;
+padding-right:0 !important;
+}
+
+table{
+table-layout:auto;
+}
+
+.services-cell{
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+max-width:220px;
+}   
+
+/* container */
+
+.services-cell{
+position:relative;
+}
+
+.services-cell:hover .services-tooltip{
+display:block;
+}
+
+.ts-control{
+background:#111827 !important;
+border:1px solid #374151 !important;
+color:#e5e7eb !important;
+}
+
+/* dropdown */
+.ts-dropdown{
+background:#111827 !important;
+border:1px solid #374151 !important;
+color:#e5e7eb !important;
+}
+
+/* options */
+.ts-dropdown .option{
+background:#111827 !important;
+color:#e5e7eb !important;
+}
+
+/* hover */
+.ts-dropdown .option.active{
+background:#1f2937 !important;
+color:white !important;
+}
+
+/* selected chips */
+.ts-control .item{
+background:#1f2937 !important;
+color:#e5e7eb !important;
+border-radius:6px !important;
+padding:2px 6px !important;
+}
+
+/* search input */
+.ts-control input{
+color:white !important;
+}
+
+/* scrollbar */
+.ts-dropdown::-webkit-scrollbar{
+width:8px;
+}
+
+.ts-dropdown::-webkit-scrollbar-thumb{
+background:#374151;
+border-radius:4px;
+}
+
+.services-cell{
+max-width:420px;
+white-space:normal;
+}
+
+.service-chip{
+font-size:10px;
+padding:1px 5px;
+background:#1f2937;
+border-radius:4px;
+}
+
+
+
+</style>
+
 </head>
 
 <body class="bg-gray-950 text-gray-100">
@@ -21,52 +138,63 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <div class="flex min-h-screen">
 
 <!-- SIDEBAR -->
-<div class="w-60 bg-gray-900 border-r border-gray-800 flex flex-col">
+<div id="sidebar"
+class="w-60 transition-all duration-300 bg-gray-900 border-r border-gray-800 flex flex-col">
 
 <!-- SIDEBAR HEADER -->
-<div class="px-4 py-4 border-b border-gray-800 flex items-center gap-2">
+<div class="px-4 py-4 border-b border-gray-800 flex items-center justify-between">
+
+<div class="flex items-center gap-2 sidebar-text">
 <i class="fa-solid fa-gears text-blue-500"></i>
 <span class="font-semibold">Workbench</span>
+</div>
+
+<button id="sidebarToggle"
+class="text-gray-400 hover:text-white">
+<i class="fa-solid fa-bars"></i>
+</button>
+
 </div>
 
 <!-- NAV -->
 <div class="p-2 space-y-1 text-sm">
 
 <a href="/workbench/"
-class="flex items-center gap-2 px-3 py-2 rounded
+class="flex items-center gap-3 px-3 py-2 rounded
 {% if request.path == '/workbench/' %}
 bg-gray-800 text-blue-400
 {% else %}
 hover:bg-gray-800 text-gray-300
 {% endif %}">
 <i class="fa-solid fa-table"></i>
-Dashboard
+<span>Dashboard</span>
 </a>
 
 <a href="/workbench/groups/"
-class="flex items-center gap-2 px-3 py-2 rounded
+class="flex items-center gap-3 px-3 py-2 rounded
 {% if 'groups' in request.path %}
 bg-gray-800 text-blue-400
 {% else %}
 hover:bg-gray-800 text-gray-300
 {% endif %}">
 <i class="fa-solid fa-layer-group"></i>
-Group Maintenance
+<span>Group Maintenance</span>
 </a>
 
-<!-- future items -->
 <div class="border-t border-gray-800 my-2"></div>
 
-<div class="text-xs text-gray-500 px-3 pt-2">
+<div class="coming-soon text-xs text-gray-500 px-3 pt-2">
 Coming Soon
 </div>
 
-<div class="px-3 py-2 text-gray-600">
-<i class="fa-solid fa-clock mr-2"></i>Scheduler
+<div class="flex items-center gap-3 px-3 py-2 text-gray-600">
+<i class="fa-solid fa-clock"></i>
+<span>Scheduler</span>
 </div>
 
-<div class="px-3 py-2 text-gray-600">
-<i class="fa-solid fa-chart-line mr-2"></i>History
+<div class="flex items-center gap-3 px-3 py-2 text-gray-600">
+<i class="fa-solid fa-chart-line"></i>
+<span>History</span>
 </div>
 
 </div>
@@ -101,6 +229,29 @@ Manual Regression Dashboard
 </div>
 
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function(){
 
+const sidebar = document.getElementById("sidebar")
+const toggle  = document.getElementById("sidebarToggle")
+
+toggle?.addEventListener("click",()=>{
+
+sidebar.classList.toggle("sidebar-collapsed")
+
+localStorage.setItem(
+"sidebar-collapsed",
+sidebar.classList.contains("sidebar-collapsed")
+)
+
+})
+
+// restore state
+if(localStorage.getItem("sidebar-collapsed")==="true"){
+sidebar.classList.add("sidebar-collapsed")
+}
+
+})
+</script>
 </body>
 </html>

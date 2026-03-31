@@ -71,7 +71,7 @@ class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm">
 </div>
 
 <!-- COUNTERS -->
-<div class="flex gap-4 text-xm">
+<div class="flex gap-4 text-xs">
 
 <div class="text-gray-300">
 Processing:
@@ -97,24 +97,36 @@ On Hold:
 
 </div>
 
-<div class="overflow-auto max-h-[650px]">
+<div class="overflow-auto max-h-[650px] relative">
 
-<table class="w-full text-sm text-gray-300">
+<table class="w-full text-sm text-gray-300 table-fixed">
 
 <thead class="text-xs uppercase text-gray-400 border-b border-gray-800 bg-gray-900 sticky top-0 text-left">
 
 <tr>
-<th class="py-2">
+<th class="w-8 py-2">
 <input type="checkbox" id="selectAll">
 </th>
+
 <th class="w-10 text-center text-gray-500">#</th>
-<th onclick="sortTable(0)" class="cursor-pointer">Env</th>
-<th onclick="sortTable(1)" class="cursor-pointer">Request</th>
-<th onclick="sortTable(2)" class="cursor-pointer">Status</th>
-<th onclick="sortTable(3)">Parent (JID / Status)</th>
-<th onclick="sortTable(4)">Sub (JID / Status)</th>
-<th onclick="sortTable(5)" class="cursor-pointer">User</th>
-<th class="text-left">
+
+<th onclick="sortTable(0)" class="w-[70px] cursor-pointer">Env</th>
+
+<th onclick="sortTable(0)" class="w-[120px] cursor-pointer">Group Name</th>
+
+<th onclick="sortTable(0)" class="w-[150px] cursor-pointer">Services</th>
+
+<th onclick="sortTable(1)" class="w-[100px] cursor-pointer">Request</th>
+
+<th onclick="sortTable(2)" class="w-[120px] cursor-pointer">Status</th>
+
+<th onclick="sortTable(3)" class="w-[200px]">Parent (JID / Status)</th>
+
+<th onclick="sortTable(4)" class="w-[200px]">Sub (JID / Status)</th>
+
+<th onclick="sortTable(5)" class="w-[85px] cursor-pointer">User</th>
+
+<th class="w-[170px] text-left">
 Started
 <button id="filter-started-btn"
 class="ml-1 text-gray-500 hover:text-white">
@@ -122,15 +134,17 @@ class="ml-1 text-gray-500 hover:text-white">
 </button>
 </th>
 
-<th class="text-left">
+<th class="w-[170px] text-left">
 Completed
 <button id="filter-completed-btn"
 class="ml-1 text-gray-500 hover:text-white">
 <i class="fa-solid fa-filter text-xs"></i>
 </button>
 </th>
-<th>Duration</th>
-<th>Action</th>
+
+<th class="w-[100px]">Duration</th>
+
+<th class="w-[140px]">Action</th>
 </tr>
 
 <!-- FILTER ROW -->
@@ -138,6 +152,7 @@ class="ml-1 text-gray-500 hover:text-white">
 <th></th>
 <th></th>
 
+<!-- ENV -->
 <th>
 <select id="filter-env"
 onchange="filterTable()"
@@ -148,16 +163,34 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
 </select>
 </th>
 
+<!-- GROUP -->
+<th>
+<input id="filter-group"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<!-- SERVICES -->
+<th>
+<select id="filter-services"
+onchange="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
+<option value="">All</option>
+</select>
+</th>
+
+<!-- REQUEST -->
 <th>
 <input id="filter-request"
 onkeyup="filterTable()"
 class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
 </th>
 
+<!-- STATUS -->
 <th>
 <select id="filter-status"
 onchange="filterTable()"
-class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full font-semibold tracking-wide text-xs">
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
 <option value="">All</option>
 <option>Abandoned</option>
 <option>Completed</option>
@@ -167,9 +200,23 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full font-semibold
 </select>
 </th>
 
-<th><input id="filter-parent" onkeyup="filterTable()" class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/></th>
-<th><input id="filter-child" onkeyup="filterTable()" class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/></th>
-<th><input id="filter-user" onkeyup="filterTable()" class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/></th>
+<th>
+<input id="filter-parent"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<th>
+<input id="filter-child"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<th>
+<input id="filter-user"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
 
 <th></th>
 <th></th>
@@ -192,7 +239,46 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full font-semibold
 
 <td class="row-number text-gray-200 font-bold text-sm text-center"></td>
 
-<td class="text-gray-400">{{ req.environment|upper }}</td>
+<td class="text-gray-400">
+{{ req.environment|upper }}
+</td>
+
+<!-- GROUP -->
+<td class="text-gray-300">
+{{ req.group.name|default:"-" }}
+</td>
+
+<!-- SERVICES -->
+<td class="services-cell group">
+
+{% with req.services.all as services %}
+{% if services %}
+
+<span class="service-chip">
+{{ services.0.name }}
+{% if services|length > 1 %}
++{{ services|length|add:"-1" }}
+{% endif %}
+</span>
+
+<div class="hidden group-hover:block
+            fixed
+            bg-gray-900 border border-gray-700
+            rounded px-2 py-1 text-xs
+            shadow-lg z-[9999]">
+
+{% for s in services %}
+<div>{{ s.name }}</div>
+{% endfor %}
+
+</div>
+
+{% else %}
+-
+{% endif %}
+{% endwith %}
+
+</td>
 
 <td>
 {% if req.environment == "stage" %}
