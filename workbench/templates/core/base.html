@@ -20,133 +20,88 @@ href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <!-- SERVICES STYLES -->
 <style>
 
+/* ===============================
+SIDEBAR COLLAPSE
+=============================== */
+
 .sidebar-collapsed{
 width:70px !important;
 }
 
-/* hide ALL sidebar text */
 .sidebar-collapsed span{
 display:none;
 }
 
-/* hide coming soon label */
 .sidebar-collapsed .coming-soon{
 display:none;
 }
 
-/* center icons */
 .sidebar-collapsed a,
 .sidebar-collapsed div{
 justify-content:center;
 }
 
-/* remove left padding */
 .sidebar-collapsed .p-2 > *{
 padding-left:0 !important;
 padding-right:0 !important;
 }
 
+
+/* ===============================
+TABLE
+=============================== */
+
 table{
 table-layout:auto;
 }
 
-.services-cell{
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
-max-width:220px;
-}   
 
-/* container */
+/* ===============================
+SERVICES CELL
+=============================== */
 
 .services-cell{
 position:relative;
+max-width:220px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
 }
 
-.services-cell:hover .services-tooltip{
-display:block;
-}
 
-.ts-control{
-background:#111827 !important;
-border:1px solid #374151 !important;
-color:#e5e7eb !important;
-}
-
-/* dropdown */
-.ts-dropdown{
-background:#111827 !important;
-border:1px solid #374151 !important;
-color:#e5e7eb !important;
-}
-
-/* options */
-.ts-dropdown .option{
-background:#111827 !important;
-color:#e5e7eb !important;
-}
-
-/* hover */
-.ts-dropdown .option.active{
-background:#1f2937 !important;
-color:white !important;
-}
-
-/* selected chips */
-.ts-control .item{
-background:#1f2937 !important;
-color:#e5e7eb !important;
-border-radius:6px !important;
-padding:2px 6px !important;
-}
-
-/* search input */
-.ts-control input{
-color:white !important;
-}
-
-/* scrollbar */
-.ts-dropdown::-webkit-scrollbar{
-width:8px;
-}
-
-.ts-dropdown::-webkit-scrollbar-thumb{
-background:#374151;
-border-radius:4px;
-}
-
-.services-cell{
-max-width:420px;
-white-space:normal;
-}
+/* ===============================
+SERVICE CHIP
+=============================== */
 
 .service-chip{
 font-size:10px;
-padding:1px 5px;
+padding:1px 6px;
 background:#1f2937;
 border-radius:4px;
+display:inline-block;
 }
+
+
+/* ===============================
+TOOLTIP (ROBUST)
+=============================== */
 
 .services-tooltip{
 display:none;
-position:absolute;
-left:0;
-top:100%;
-margin-top:4px;
+position:fixed;
 
 background:#020617;
 border:1px solid #1e293b;
 border-radius:8px;
 
-padding:6px 8px;
+padding:6px;
 min-width:180px;
 max-width:260px;
 
-box-shadow:
-0 10px 25px rgba(0,0,0,.5),
-0 0 0 1px rgba(255,255,255,.02);
+box-shadow:0 10px 25px rgba(0,0,0,.6);
 
 z-index:9999;
+white-space:normal;
 }
 
 .services-cell:hover .services-tooltip{
@@ -155,13 +110,60 @@ display:block;
 
 .tooltip-item{
 padding:4px 6px;
-border-radius:4px;
 font-size:12px;
+border-radius:4px;
 color:#e5e7eb;
 }
 
 .tooltip-item:hover{
 background:#1e293b;
+}
+
+
+/* ===============================
+TOM SELECT
+=============================== */
+
+.ts-control{
+background:#111827 !important;
+border:1px solid #374151 !important;
+color:#e5e7eb !important;
+}
+
+.ts-dropdown{
+background:#111827 !important;
+border:1px solid #374151 !important;
+color:#e5e7eb !important;
+}
+
+.ts-dropdown .option{
+background:#111827 !important;
+color:#e5e7eb !important;
+}
+
+.ts-dropdown .option.active{
+background:#1f2937 !important;
+color:white !important;
+}
+
+.ts-control .item{
+background:#1f2937 !important;
+color:#e5e7eb !important;
+border-radius:6px !important;
+padding:2px 6px !important;
+}
+
+.ts-control input{
+color:white !important;
+}
+
+.ts-dropdown::-webkit-scrollbar{
+width:8px;
+}
+
+.ts-dropdown::-webkit-scrollbar-thumb{
+background:#374151;
+border-radius:4px;
 }
 
 </style>
@@ -287,6 +289,21 @@ sidebar.classList.add("sidebar-collapsed")
 }
 
 })
+
+document.addEventListener("mouseover", e=>{
+const cell = e.target.closest(".services-cell")
+if(!cell) return
+
+const tip = cell.querySelector(".services-tooltip")
+if(!tip) return
+
+const rect = cell.getBoundingClientRect()
+
+tip.style.left = rect.left + "px"
+tip.style.top  = (rect.bottom + 6) + "px"
+})
+
+
 </script>
 </body>
 </html>

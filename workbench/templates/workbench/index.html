@@ -9,39 +9,6 @@ Manual Regression Workbench
 </h2>
 </div>
 
-<!-- ADD REQUEST -->
-<div class="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-6">
-
-<form method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-{% csrf_token %}
-
-<select name="environment"
-required
-class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-<option value="">Select Env</option>
-<option value="stage">Stage</option>
-<option value="prod">Production</option>
-</select>
-
-<input type="text"
-name="request_id"
-required
-placeholder="Request ID"
-class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-/>
-
-<button
-type="submit"
-class="bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 font-medium flex items-center justify-center gap-2">
-
-<i class="fa-solid fa-plus"></i>
-Add Request
-
-</button>
-
-</form>
-</div>
-
 <!-- TABLE CARD -->
 <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
 
@@ -251,7 +218,7 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
 <!-- SERVICES -->
 <td class="services-cell group">
 
-{% with req.services.all as services %}
+{% with req.services.all|dictsort:"name" as services %}
 {% if services %}
 
 <span class="service-chip">
@@ -261,16 +228,10 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
 {% endif %}
 </span>
 
-<div class="hidden group-hover:block
-            fixed
-            bg-gray-900 border border-gray-700
-            rounded px-2 py-1 text-xs
-            shadow-lg z-[9999]">
-
-{% for s in services|dictsort:"name" %}
-<div>{{ s.name }}</div>
+<div class="services-tooltip">
+{% for s in services %}
+<div class="tooltip-item">{{ s.name }}</div>
 {% endfor %}
-
 </div>
 
 {% else %}
