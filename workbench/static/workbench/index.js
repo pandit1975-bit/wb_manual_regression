@@ -4,6 +4,7 @@
 
 let activeJobs = new Set();
 let durationTimers = {};
+let runStartTimes = {};
 
 /////////////////////////////////////////////////////
 // LOAD SERVICES FILTER DROPDOWN
@@ -45,18 +46,18 @@ return document.querySelector("[name=csrfmiddlewaretoken]").value;
 // SHORT DATE
 /////////////////////////////////////////////////////
 
-
 function shortDT(str){
-if(!str || str==="-" ) return "-"
+if(!str || str === "-") return "-"
 
 const d = new Date(str)
 
 return d.toLocaleString("en-US",{
 month:"2-digit",
 day:"2-digit",
-hour:"2-digit",
+year:"numeric",
+hour:"numeric",
 minute:"2-digit",
-hour12:false
+hour12:true
 })
 }
 
@@ -84,8 +85,9 @@ headers:{
 }
 });
 
-moveRowToTop(id);
+runStartTimes[id] = new Date();
 activeJobs.add(id);
+moveRowToTop(id);
 updateStatus(id);
 
 }catch(err){
@@ -345,14 +347,15 @@ const child  = (data.current_status || "").toUpperCase();
 
 updateRowStyle(id, data.status, data.current_status)
 
-const finalText =
-(parentStatusText + " " + childStatusText).toUpperCase()
+const parentTerminal =
+parentStatusText.includes("COMPLETED") ||
+parentStatusText.includes("FAILED") ||
+parentStatusText.includes("ABANDONED")
 
-const terminal =
-finalText.includes("COMPLETED") ||
-finalText.includes("FAILED") ||
-finalText.includes("ABANDONED") ||
-finalText.includes("ERRORED")
+const childTerminal =
+childStatusText.includes("ERRORED")
+
+const terminal = parentTerminal
 
 if(terminal){
 activeJobs.delete(id)
@@ -363,6 +366,15 @@ activeJobs.add(id)
 
 const onHold = child.includes("ON_HOLD");
 
+// always keep polling unless terminal
+if(terminal){
+activeJobs.delete(id)
+stopDurationTimer(id)
+}else{
+activeJobs.add(id)
+}
+
+// duration logic only
 if(!terminal && !onHold){
 startDurationTimer(id, data.started_at)
 }else{
@@ -388,7 +400,10 @@ if(durationTimers[id]){
 clearInterval(durationTimers[id])
 }
 
-const start = new Date(startedAt)
+const start =
+runStartTimes[id]
+? new Date(runStartTimes[id])
+: new Date(startedAt)
 
 durationTimers[id] = setInterval(()=>{
 
@@ -451,6 +466,7 @@ form.addEventListener("submit", function(){
 
 const id = btn.dataset.id;
 
+runStartTimes[id] = new Date();
 activeJobs.add(id);
 moveRowToTop(id);
 updateStatus(id);
@@ -543,6 +559,7 @@ updateStatus(id);
 window.addEventListener("load",()=>{
 
 loadServicesFilter()
+restoreUI()
 
 document.querySelectorAll("tr[id^='row-']")
 .forEach(row=>{
@@ -554,11 +571,28 @@ row.querySelector("[id^='status-']")
 ?.innerText
 ?.toUpperCase() || ""
 
-if(
+const started =
+row.querySelector(`[id^='started-${id}']`)?.innerText
+
+const completed =
+row.querySelector(`[id^='completed-${id}']`)?.innerText
+
+const terminal =
+statusText.includes("COMPLETED") ||
+statusText.includes("FAILED") ||
+statusText.includes("ABANDONED") ||
+statusText.includes("ERRORED")
+
+// start timer only if running
+if(!terminal && started && started !== "-"){
+startDurationTimer(id, started)
+}
+
+if(!terminal && (
 statusText.includes("RUNNING") ||
 statusText.includes("PROCESSING") ||
 statusText.includes("QUEUED")
-){
+)){
 activeJobs.add(id)
 updateStatus(id)
 }
@@ -839,5 +873,57 @@ headers:{
 
 })
 
+/////////////////////////////////////////////////////
+// RESTORE UI AFTER REFRESH
+/////////////////////////////////////////////////////
 
+function restoreUI(){
+
+document.querySelectorAll("tr[id^='row-']").forEach(row=>{
+
+const id = row.id.replace("row-","")
+
+const statusEl = document.getElementById(`status-${id}`)
+const startedEl = document.getElementById(`started-${id}`)
+const completedEl = document.getElementById(`completed-${id}`)
+
+if(!statusEl) return
+
+const statusText = statusEl.innerText.trim()
+
+// restore badge
+statusEl.innerHTML = statusBadge(statusText)
+
+// restore row color
+updateRowStyle(id, statusText, "")
+
+// restore duration
+const started = startedEl?.innerText
+const completed = completedEl?.innerText
+
+if(started && started !== "-"){
+
+const start = new Date(started)
+
+let end = new Date()
+
+if(completed && completed !== "-"){
+end = new Date(completed)
+}
+
+const diff = Math.floor((end - start)/1000)
+
+const mins = Math.floor(diff/60)
+const secs = diff % 60
+
+const text =
+mins>0 ? `${mins}m ${secs}s` : `${secs}s`
+
+const durEl = document.getElementById(`duration-${id}`)
+if(durEl) durEl.innerText = text
+}
+
+})
+
+}
 

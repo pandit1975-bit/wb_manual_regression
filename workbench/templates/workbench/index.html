@@ -109,7 +109,7 @@ class="ml-1 text-gray-500 hover:text-white">
 </button>
 </th>
 
-<th class="w-[100px]">Duration</th>
+<th class="w-[80px]">Duration</th>
 
 <th class="w-[140px]">Action</th>
 </tr>
@@ -297,8 +297,13 @@ class="text-blue-400 hover:text-blue-300 font-medium">
 
 <td id="user-{{ req.id }}">{{ req.submitter|default:"-" }}</td>
 
-<td id="started-{{ req.id }}">{{ req.started_at|default:"-" }}</td>
-<td id="completed-{{ req.id }}">{{ req.completed_at|default:"-" }}</td>
+<td id="started-{{ req.id }}">
+{{ req.started_at|date:"m/d/Y, g:i A"|default:"-" }}
+</td>
+
+<td id="completed-{{ req.id }}">
+{{ req.completed_at|date:"m/d/Y, g:i A"|default:"-" }}
+</td>
 
 <td id="duration-{{ req.id }}">-</td>
 
