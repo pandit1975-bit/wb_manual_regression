@@ -542,16 +542,33 @@ updateStatus(id);
 });
 
 /////////////////////////////////////////////////////
-// SMART POLLING
+// RESILIENT POLLING (LONG RUN SAFE)
 /////////////////////////////////////////////////////
 
 setInterval(()=>{
 
-if(activeJobs.size === 0) return;
+document.querySelectorAll("tr[id^='row-']").forEach(row=>{
 
-activeJobs.forEach(id=>updateStatus(id))
+const id = row.id.replace("row-","")
 
-},5000);
+const status =
+row.querySelector("[id^='status-']")
+?.innerText
+?.toUpperCase() || ""
+
+const terminal =
+status.includes("COMPLETED") ||
+status.includes("FAILED") ||
+status.includes("ABANDONED") ||
+status.includes("ERRORED")
+
+if(!terminal){
+updateStatus(id)
+}
+
+})
+
+},10000)   // 10 sec safe for long jobs
 
 setTimeout(updateCounters,500);
 setTimeout(updateRowNumbers,100);
