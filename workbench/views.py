@@ -419,3 +419,7 @@ def remove_item_service(request, id):
         pass
 
     return JsonResponse({"ok":True})
+
+def groups_json(request):
+    groups = RequestGroup.objects.values_list("name", flat=True)
+    return JsonResponse({"groups": list(groups)})

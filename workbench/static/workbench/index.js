@@ -104,7 +104,8 @@ console.error("recheck error", err);
 function filterTable(){
 
 const env      = document.getElementById("filter-env")?.value.toUpperCase() || ""
-const group    = document.getElementById("filter-group")?.value.toUpperCase() || ""
+const groupSelect = document.getElementById("filter-group")
+const groups = groupSelect?.tomselect?.getValue() || []
 const services = document.getElementById("filter-services")?.value.toUpperCase() || ""
 const request  = document.getElementById("filter-request")?.value.toUpperCase() || ""
 const status   = document.getElementById("filter-status")?.value.toUpperCase() || ""
@@ -127,7 +128,7 @@ const userText     = tds[9]?.innerText.toUpperCase() || ""
 
 const show =
 envText.includes(env) &&
-groupText.includes(group) &&
+(groups.length === 0 || groups.some(g => groupText.includes(g.toUpperCase()))) &&
 servicesText.includes(services) &&
 requestText.includes(request) &&
 statusText.includes(status) &&
@@ -243,6 +244,71 @@ ${childJid}
 : "-"
 }
 
+/////////////////////////////////////////////////////
+// LOAD GROUP FILTER
+/////////////////////////////////////////////////////
+
+async function loadGroupFilter(){
+
+const select = document.getElementById("filter-group")
+if(!select) return
+
+const res = await fetch("/workbench/groups/json/")
+const data = await res.json()
+
+select.innerHTML = ""
+
+data.groups.sort().forEach(g=>{
+const opt = document.createElement("option")
+opt.value = g
+opt.textContent = g
+select.appendChild(opt)
+})
+
+/////////////////////////////////////////////////////
+// TOM SELECT GROUP FILTER
+/////////////////////////////////////////////////////
+
+const ts = new TomSelect(select,{
+plugins:['checkbox_options'],
+closeAfterSelect:false,
+hideSelected:false,
+
+render:{
+option:function(data,escape){
+return `<div class="ts-opt">${escape(data.text)}</div>`
+}
+},
+
+onInitialize:function(){
+updateGroupLabel(this)
+},
+
+onChange:function(){
+updateGroupLabel(this)
+filterTable()
+}
+
+})
+
+function updateGroupLabel(ts){
+
+const count = ts.items.length
+
+if(count === 0){
+ts.control_input.placeholder = "All"
+}
+else if(count === 1){
+ts.control_input.placeholder =
+ts.options[ts.items[0]].text
+}
+else{
+ts.control_input.placeholder =
+count + " groups"
+}
+
+}
+}
 
 /////////////////////////////////////////////////////
 // UPDATE STATUS
@@ -560,6 +626,7 @@ window.addEventListener("load",()=>{
 
 loadServicesFilter()
 restoreUI()
+loadGroupFilter()
 
 document.querySelectorAll("tr[id^='row-']")
 .forEach(row=>{
@@ -926,4 +993,6 @@ if(durEl) durEl.innerText = text
 })
 
 }
+
+
 
