@@ -258,3 +258,29 @@ document.getElementById("servicePopup")
 .classList.remove("hidden")
 
 })
+
+/////////////////////////////////////////////////////
+// COLLAPSIBLE GROUPS + SERVICES
+/////////////////////////////////////////////////////
+
+document.addEventListener("click",e=>{
+
+// toggle group
+const g = e.target.closest(".group-header")
+if(g){
+const id = g.dataset.group
+document
+.getElementById(`group-body-${id}`)
+.classList.toggle("hidden")
+}
+
+// toggle services
+const r = e.target.closest(".toggle-services")
+if(r){
+const id = r.dataset.id
+document
+.getElementById(`services-${id}`)
+.classList.toggle("hidden")
+}
+
+})

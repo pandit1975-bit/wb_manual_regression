@@ -23,10 +23,17 @@ Create Group
 <div class="mt-6 border border-gray-700 p-4 rounded-lg bg-gray-900">
 
 <!-- GROUP HEADER -->
-<div class="flex justify-between items-center mb-3">
+<div class="group-header
+flex justify-between items-center mb-2
+cursor-pointer"
+data-group="{{g.id}}">
 
-<div class="font-semibold text-lg">
+<div class="flex items-center gap-2 font-semibold text-lg">
+<i class="fa-solid fa-chevron-down text-xs group-chevron"></i>
 {{ g.name }}
+<span class="text-xs text-gray-400">
+({{ g.items.count }})
+</span>
 </div>
 
 <button type="button"
@@ -38,6 +45,10 @@ data-id="{{g.id}}">
 </button>
 
 </div>
+
+<div id="group-body-{{g.id}}">
+
+   
 
 <!-- ADD REQUEST ROW -->
 <div class="flex gap-2 mb-3">
@@ -69,21 +80,34 @@ Add
 <div class="space-y-2">
 
 {% for i in g.items.all %}
-<div class="bg-gray-800 px-3 py-2 rounded">
+<div class="request-row bg-gray-800/50 px-3 py-1 rounded">
 
 <div class="flex justify-between items-center text-sm">
 
-<div>
-<span class="text-gray-400">{{i.environment|upper}}</span>
-<span class="ml-2 text-blue-400 font-mono">{{i.request_id}}</span>
-</div>
-
 <div class="flex items-center gap-3">
 
+<span class="text-gray-400">
+{{i.environment|upper}}
+</span>
+
+<span class="text-blue-400 font-mono">
+{{i.request_id}}
+</span>
+
 <button type="button"
-class="add-item-service text-blue-400 hover:text-blue-300 text-xs"
+class="add-item-service text-blue-400 hover:text-blue-300 text-sm ml-2"
 data-id="{{i.id}}">
 + Service
+</button>
+
+</div>
+
+<div class="flex items-center gap-3 ml-auto">
+
+<button type="button"
+class="toggle-services text-gray-400 hover:text-white"
+data-id="{{i.id}}">
+<i class="fa-solid fa-chevron-down text-xs"></i>
 </button>
 
 <button type="button"
@@ -97,7 +121,8 @@ data-id="{{i.id}}">
 </div>
 
 <!-- SERVICES -->
-<div class="flex flex-wrap gap-1 mt-2">
+<div class="services hidden flex flex-wrap gap-1 mt-1"
+id="services-{{i.id}}">
 
 {% for s in i.services.all|dictsort:"name" %}
 <span class="service-chip flex items-center gap-1">
@@ -121,7 +146,7 @@ data-name="{{s.name}}">
 {% endfor %}
 
 </div>  <!-- end request list -->
-
+</div>  <!-- end group body -->
 </div>  <!-- end group card -->
 
 {% endfor %}
