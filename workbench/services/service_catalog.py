@@ -63,3 +63,4 @@ SERVICES = [
 "Tally"
 
 ]
+SERVICES.append("KKP")

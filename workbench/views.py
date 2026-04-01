@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.utils.timezone import localtime, now
 from django.conf import settings
 
+import os
 import threading
 
 from .models import (
@@ -278,7 +279,15 @@ def group_master(request):
 
         return redirect("group_master")
 
-    groups = RequestGroup.objects.prefetch_related("items").all()
+    from django.db.models import Prefetch
+
+    groups = RequestGroup.objects.prefetch_related(
+        Prefetch(
+            "items",
+            queryset=RequestGroupItem.objects.prefetch_related("services")
+            .order_by("-created_at")
+        )
+    ).order_by("-created_at")
 
     return render(request,"workbench/group_master.html",{
         "groups":groups
@@ -369,25 +378,34 @@ def add_item_service(request, id):
     item = RequestGroupItem.objects.get(id=id)
 
     data = json.loads(request.body)
-    name = data.get("name")
+    name = data.get("name").strip()
 
     service,_ = Service.objects.get_or_create(name=name)
 
     item.services.add(service)
 
-    # 🔥 sync dashboard
-    WorkbenchRequest.objects.filter(
-        group=item.group,
-        environment=item.environment,
-        request_id=item.request_id
-    ).update()
-
+    # sync dashboard
     for r in WorkbenchRequest.objects.filter(
         group=item.group,
         environment=item.environment,
         request_id=item.request_id
     ):
         r.services.add(service)
+
+    # 🔥 NEW: update service_catalog.py
+    catalog_path = os.path.join(
+        settings.BASE_DIR,
+        "workbench",
+        "services",
+        "service_catalog.py"
+    )
+
+    with open(catalog_path, "r") as f:
+        content = f.read()
+
+    if name not in content:
+        with open(catalog_path, "a") as f:
+            f.write(f'\nSERVICES.append("{name}")\n')
 
     return JsonResponse({"ok":True})
 

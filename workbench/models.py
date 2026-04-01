@@ -49,6 +49,8 @@ class RequestGroupItem(models.Model):
         related_name="group_items"
     )
 
+    created_at = models.DateTimeField(auto_now_add=True)  # ADD THIS
+
     def __str__(self):
         return f"{self.group.name} - {self.request_id}"
 

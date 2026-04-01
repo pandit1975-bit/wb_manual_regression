@@ -31,6 +31,10 @@ data-group="{{g.id}}">
 <div class="flex items-center gap-2 font-semibold text-lg">
 <i class="fa-solid fa-chevron-down text-xs group-chevron"></i>
 {{ g.name }}
+
+<span class="text-xs text-gray-500 ml-2">
+{{ g.created_at|date:"M d, g:i A" }}
+</span>
 <span class="text-xs text-gray-400">
 ({{ g.items.count }})
 </span>
@@ -92,6 +96,15 @@ Add
 
 <span class="text-blue-400 font-mono">
 {{i.request_id}}
+</span>
+
+<span class="text-xs text-gray-500 ml-1">
+{{ i.services.count }}
+Service{% if i.services.count != 1 %}s{% endif %}
+</span>
+
+<span class="text-xs text-gray-600">
+{{ i.created_at|date:"M d, g:i A" }}
 </span>
 
 <button type="button"
