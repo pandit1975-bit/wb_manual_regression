@@ -121,8 +121,5 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-WORKBENCH_USERNAME = "iusa\kiranp"
-WORKBENCH_PASSWORD = "ShreeKush006!"
-
 STAGE_WORKBENCH_URL = "http://workbench-stage:8765"
 PROD_WORKBENCH_URL = "http://workbench.intra.infousa.com:8765"

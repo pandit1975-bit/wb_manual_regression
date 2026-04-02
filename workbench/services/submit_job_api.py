@@ -1,9 +1,11 @@
 from django.utils.timezone import now
 import requests
-from requests_ntlm import HttpNtlmAuth
+from requests_negotiate_sspi import HttpNegotiateAuth
 from bs4 import BeautifulSoup
 from django.conf import settings
 import logging
+
+from requests_ntlm import HttpNtlmAuth
 
 from .jid_service import fetch_job_id
 
@@ -21,10 +23,7 @@ def val(soup, field):
 def submit_job(obj):
 
     session = requests.Session()
-    session.auth = HttpNtlmAuth(
-        settings.WORKBENCH_USERNAME,
-        settings.WORKBENCH_PASSWORD
-    )
+    session.auth = HttpNegotiateAuth()
 
     session.headers.update({"Connection": "close"})
 
