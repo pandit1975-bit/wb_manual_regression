@@ -447,3 +447,34 @@ def remove_item_service(request, id):
 def groups_json(request):
     groups = RequestGroup.objects.values_list("name", flat=True)
     return JsonResponse({"groups": list(groups)})
+
+# ========================
+# SAVE NOTES
+# ========================
+
+def save_notes(request, pk):
+    obj = WorkbenchRequest.objects.get(pk=pk)
+
+    data = json.loads(request.body)
+    obj.notes = data.get("notes")
+
+    obj.save()
+
+    return JsonResponse({"ok":True})
+
+# ========================
+# DELETE NOTES
+# ========================
+def delete_notes(request, pk):
+    obj = WorkbenchRequest.objects.get(pk=pk)
+    obj.notes = None
+    obj.save()
+    return JsonResponse({"ok":True})
+
+# ========================
+# GET NOTES
+# ========================
+
+def get_notes(request, pk):
+    obj = WorkbenchRequest.objects.get(pk=pk)
+    return JsonResponse({"notes": obj.notes})

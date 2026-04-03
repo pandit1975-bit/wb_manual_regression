@@ -23,6 +23,9 @@ urlpatterns = [
     path("groups/<int:id>/remove-service/", views.remove_group_service),
     path("items/<int:id>/add-service/", views.add_item_service),
     path("items/<int:id>/remove-service/", views.remove_item_service),
-    path("workbench/groups/json/", views.groups_json)
+    path("workbench/groups/json/", views.groups_json),
+    path("notes/<int:pk>/", views.get_notes),
+    path("notes/<int:pk>/save/", views.save_notes),
+    path("notes/<int:pk>/delete/", views.delete_notes),
 
 ]

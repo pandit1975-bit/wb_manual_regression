@@ -77,20 +77,14 @@ On Hold:
 
 <th class="w-10 text-center text-gray-500">#</th>
 
-<th onclick="sortTable(0)" class="w-[70px] cursor-pointer">Env</th>
-
+<th onclick="sortTable(0)" class="w-[50px] cursor-pointer">Env</th>
 <th onclick="sortTable(0)" class="w-[150px] cursor-pointer">Group Name</th>
-
-<th onclick="sortTable(0)" class="w-[260px] cursor-pointer">Services</th>
-
-<th onclick="sortTable(1)" class="w-[80px] cursor-pointer">Request</th>
-
+<th class="w-[215px]">Services</th>
+<th class="w-[80px]">Notes</th>
+<th class="w-[80px]">Request</th>
 <th onclick="sortTable(2)" class="w-[100px] cursor-pointer">Status</th>
-
-<th onclick="sortTable(3)" class="w-[180px]">Parent (JID / Status)</th>
-
-<th onclick="sortTable(4)" class="w-[180px]">Sub (JID / Status)</th>
-
+<th onclick="sortTable(3)" class="w-[170px]">Parent (JID / Status)</th>
+<th onclick="sortTable(4)" class="w-[170px]">Sub (JID / Status)</th>
 <th onclick="sortTable(5)" class="w-[70px] cursor-pointer">User</th>
 
 <th class="w-[170px] text-left">
@@ -149,6 +143,13 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
 </select>
 </th>
 
+<th>
+<input id="filter-notes"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+
 <!-- REQUEST -->
 <th>
 <input id="filter-request"
@@ -197,7 +198,35 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
 
 </thead>
 
-<tbody>
+<div id="notesModal"
+class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+<div class="bg-gray-900 border border-gray-700 rounded-lg p-4 w-[500px]">
+
+<div class="text-sm mb-2">Notes</div>
+
+<textarea id="notesText"
+class="w-full h-40 bg-gray-800 border border-gray-700 rounded p-2"></textarea>
+
+<div class="flex justify-end gap-2 mt-3">
+
+<button id="notesCancel"
+class="px-3 py-1 bg-gray-700 rounded">
+Cancel
+</button>
+
+<button id="notesSave"
+class="px-3 py-1 bg-blue-600 rounded">
+Save
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- This value 13px alone controls the font size of the table  -->
+<tbody class="text-[13px]">
 
 {% for req in records %}
 <tr id="row-{{ req.id }}" class="border-b border-gray-800 hover:bg-gray-800/40">
@@ -243,8 +272,45 @@ class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
 
 </td>
 
+<!-- NOTES -->
+<td 
+class="notes-cell text-center"
+data-notes="{{ req.notes|default:''|escape }}"
+>
+
+{% if req.notes %}
+
+<button 
+class="notes-edit text-blue-400 hover:text-blue-300 text-sm"
+data-id="{{ req.id }}"
+data-notes="{{ req.notes|escape }}"
+title="Edit note">
+📝
+</button>
+
+<button 
+class="notes-delete text-red-400 hover:text-red-300 text-sm ml-2"
+data-id="{{ req.id }}"
+title="Delete note">
+🗑
+</button>
+
+{% else %}
+
+<button 
+class="notes-add text-gray-400 hover:text-gray-200 text-lg font-bold"
+data-id="{{ req.id }}"
+title="Add note">
++
+</button>
+
+{% endif %}
+
+</td>
+
 <td>
 {% if req.environment == "stage" %}
+
 <a href="http://workbench-stage:8765/Default.aspx?RequestId={{ req.request_id }}"
 target="_blank"
 class="text-blue-400 hover:text-blue-300 font-medium">

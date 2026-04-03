@@ -108,6 +108,8 @@ class WorkbenchRequest(models.Model):
     cookies = models.JSONField(null=True, blank=True)
     sub_jobs = models.JSONField(null=True, blank=True)
 
+    notes = models.TextField(null=True, blank=True)
+
     queue = models.IntegerField(default=0, db_index=True)
 
     status = models.CharField(

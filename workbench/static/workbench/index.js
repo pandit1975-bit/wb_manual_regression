@@ -107,6 +107,7 @@ const env      = document.getElementById("filter-env")?.value.toUpperCase() || "
 const groupSelect = document.getElementById("filter-group")
 const groups = groupSelect?.tomselect?.getValue() || []
 const services = document.getElementById("filter-services")?.value.toUpperCase() || ""
+const notes = document.getElementById("filter-notes")?.value.toUpperCase() || ""
 const request  = document.getElementById("filter-request")?.value.toUpperCase() || ""
 const status   = document.getElementById("filter-status")?.value.toUpperCase() || ""
 const parent   = document.getElementById("filter-parent")?.value.toUpperCase() || ""
@@ -115,21 +116,22 @@ const user     = document.getElementById("filter-user")?.value.toUpperCase() || 
 
 document.querySelectorAll("tbody tr").forEach(row=>{
 
-const tds = row.querySelectorAll("td")
-
-const envText      = tds[2]?.innerText.toUpperCase() || ""
-const groupText    = tds[3]?.innerText.toUpperCase() || ""
-const servicesText = tds[4]?.innerText.toUpperCase() || ""
-const requestText  = tds[5]?.innerText.toUpperCase() || ""
-const statusText   = tds[6]?.innerText.toUpperCase() || ""
-const parentText   = tds[7]?.innerText.toUpperCase() || ""
-const childText    = tds[8]?.innerText.toUpperCase() || ""
-const userText     = tds[9]?.innerText.toUpperCase() || ""
+const envText      = row.children[2]?.innerText.toUpperCase() || ""
+const groupText    = row.children[3]?.innerText.toUpperCase() || ""
+const servicesText = row.children[4]?.innerText.toUpperCase() || ""
+const notesText =
+row.children[5]?.dataset?.notes?.toUpperCase() || ""
+const requestText  = row.children[6]?.innerText.toUpperCase() || ""
+const statusText   = row.children[7]?.innerText.toUpperCase() || ""
+const parentText   = row.children[8]?.innerText.toUpperCase() || ""
+const childText    = row.children[9]?.innerText.toUpperCase() || ""
+const userText     = row.children[10]?.innerText.toUpperCase() || ""
 
 const show =
 envText.includes(env) &&
 (groups.length === 0 || groups.some(g => groupText.includes(g.toUpperCase()))) &&
 servicesText.includes(services) &&
+notesText.includes(notes) &&
 requestText.includes(request) &&
 statusText.includes(status) &&
 parentText.includes(parent) &&
@@ -1011,5 +1013,115 @@ if(durEl) durEl.innerText = text
 
 }
 
+/////////////////////////////////////////////////////
+// FOR NOTES
+/////////////////////////////////////////////////////
 
+let currentNotesId = null;
+
+document.addEventListener("click", e => {
+
+const add = e.target.closest(".notes-add, .notes-edit");
+if(add){
+currentNotesId = add.dataset.id;
+document.getElementById("notesModal").classList.remove("hidden");
+loadNotes(currentNotesId);
+}
+
+const del = e.target.closest(".notes-delete");
+if(del){
+deleteNotes(del.dataset.id);
+}
+
+});
+
+document.getElementById("notesCancel").onclick = () =>
+document.getElementById("notesModal").classList.add("hidden");
+
+document.getElementById("notesSave").onclick = async () => {
+
+const text = document.getElementById("notesText").value;
+
+fetch(`/workbench/notes/${currentNotesId}/save/`,{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"X-CSRFToken": getCSRF()
+},
+body: JSON.stringify({notes:text})
+});
+
+location.reload();
+
+};
+
+/////////////////////////////////////////////////////
+// NOTES HELPERS
+/////////////////////////////////////////////////////
+
+async function loadNotes(id){
+
+const r = await fetch(`/workbench/notes/${id}/`);
+const data = await r.json();
+
+document.getElementById("notesText").value =
+data.notes || "";
+
+}
+
+async function deleteNotes(id){
+
+if(!confirm("Delete notes?")) return;
+
+await fetch(`/workbench/notes/${id}/delete/`,{
+method:"POST",
+headers:{
+"X-CSRFToken": getCSRF()
+}
+});
+
+location.reload();
+
+}
+
+/////////////////////////////////////////////////////
+// NOTES TOOLTIP
+/////////////////////////////////////////////////////
+
+let notesTooltip;
+
+document.addEventListener("mouseover", e => {
+
+const btn = e.target.closest(".notes-edit");
+if(!btn) return;
+
+const text = btn.dataset.notes;
+if(!text) return;
+
+notesTooltip = document.createElement("div");
+
+notesTooltip.className =
+"fixed z-50 bg-gray-900 border border-gray-600 text-sm p-3 rounded-lg shadow-xl max-w-[450px] whitespace-pre-wrap leading-relaxed";
+
+notesTooltip.innerText = text;
+
+document.body.appendChild(notesTooltip);
+
+const rect = btn.getBoundingClientRect();
+
+notesTooltip.style.left = rect.left + "px";
+notesTooltip.style.top  = (rect.bottom + 8) + "px";
+
+});
+
+document.addEventListener("mouseout", e => {
+
+if(!notesTooltip) return;
+
+if(e.target.closest(".notes-edit")){
+notesTooltip.remove();
+notesTooltip = null;
+}
+
+});;
 
