@@ -64,6 +64,13 @@ def workbench_home(request):
 # RUN REQUEST
 # ========================
 def run_request(request, pk):
+
+    user = (
+        request.META.get("REMOTE_USER")
+        or request.headers.get("X-User")
+        or "unknown"
+    )
+
     obj = get_object_or_404(WorkbenchRequest, pk=pk)
 
     obj.status = "running"
@@ -72,17 +79,17 @@ def run_request(request, pk):
     obj.job_id = None
     obj.current_status = None
     obj.overall_status = None
-    obj.submitter = None
+    obj.submitter = user
     obj.completed_at = None
     obj.error_message = None
 
     obj.save()
 
-    def background_task(obj_id):
+    def background_task(obj_id, user):
         obj = WorkbenchRequest.objects.get(pk=obj_id)
 
         try:
-            submit_job(obj)
+            submit_job(obj, user)
 
             obj.refresh_from_db()
 
@@ -105,11 +112,10 @@ def run_request(request, pk):
 
     threading.Thread(
         target=background_task,
-        args=(obj.id,),
+        args=(obj.id, user),
         daemon=False
     ).start()
 
-    # 🔥 FIX HERE
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JsonResponse({"success": True})
 

@@ -20,7 +20,7 @@ def val(soup, field):
     return el["value"] if el and el.has_attr("value") else ""
 
 
-def submit_job(obj):
+def submit_job(obj, user):
 
     session = requests.Session()
     session.auth = HttpNegotiateAuth()
@@ -100,6 +100,8 @@ def submit_job(obj):
         # -------------------------
         # SUBMIT
         # -------------------------
+        log("Submitting as:", user)
+        
         payload = {
             "RadScriptManager1_TSM": radscript,
             "__EVENTTARGET": "ToolBar1$radToolBarHome",
@@ -124,8 +126,8 @@ def submit_job(obj):
             "mySavedModel": diagram,
 
             "cbxProduction": "on",
-            "currentUser": "kiranp",
-            "createdBy": "kiranp",
+            "currentUser": user,
+            "createdBy": user,
         }
 
         headers = {
