@@ -1,5 +1,15 @@
 from waitress import serve
-from wb_manual_regression.wsgi import application
+from django.core.wsgi import get_wsgi_application
+from django.conf import settings
+from django.contrib.staticfiles.handlers import StaticFilesHandler
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'wb_manual_regression.settings')
+
+application = get_wsgi_application()
+
+# serve static files
+application = StaticFilesHandler(application)
 
 serve(
     application,
