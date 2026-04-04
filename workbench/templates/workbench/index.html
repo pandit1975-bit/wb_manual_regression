@@ -1,0 +1,516 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="mb-6">
+<h2 class="text-2xl font-semibold flex items-center gap-2">
+<i class="fa-solid fa-flask text-blue-500"></i>
+Manual Regression Workbench
+</h2>
+</div>
+
+<!-- TABLE CARD -->
+<div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+
+<!-- TOP BAR -->
+<div class="flex items-center justify-between mb-4">
+
+<div class="flex items-center gap-3">
+
+<button
+id="runSelected"
+type="button"
+class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2">
+Run Selected
+</button>
+
+<select id="loadGroup"
+class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm">
+
+<option value="">Load Group</option>
+
+{% for g in groups %}
+<option value="{{g.id}}">{{g.name}}</option>
+{% endfor %}
+
+</select>
+
+</div>
+
+<!-- COUNTERS -->
+<div class="flex gap-4 text-xs">
+
+<div class="text-gray-300">
+Processing:
+<span id="count-running" class="text-blue-400 font-semibold">0</span>
+</div>
+
+<div class="text-gray-300">
+Completed:
+<span id="count-completed" class="text-green-400 font-semibold">0</span>
+</div>
+
+<div class="text-gray-300">
+Failed:
+<span id="count-failed" class="text-red-400 font-semibold">0</span>
+</div>
+
+<div class="text-gray-300">
+On Hold:
+<span id="count-hold" class="text-yellow-400 font-semibold">0</span>
+</div>
+
+</div>
+
+</div>
+
+<div class="overflow-auto max-h-[650px] relative">
+
+<table class="w-full text-sm text-gray-300 table-fixed">
+
+<thead class="text-xs uppercase text-gray-400 border-b border-gray-800 bg-gray-900 sticky top-0 text-left">
+
+<tr>
+<th class="w-8 py-2">
+<input type="checkbox" id="selectAll">
+</th>
+
+<th class="w-10 text-center text-gray-500">#</th>
+
+<th onclick="sortTable(0)" class="w-[50px] cursor-pointer">Env</th>
+<th onclick="sortTable(0)" class="w-[150px] cursor-pointer">Group Name</th>
+<th class="w-[215px]">Services</th>
+<th class="w-[80px]">Notes</th>
+<th class="w-[80px]">Request</th>
+<th onclick="sortTable(2)" class="w-[100px] cursor-pointer">Status</th>
+<th onclick="sortTable(3)" class="w-[170px]">Parent (JID / Status)</th>
+<th onclick="sortTable(4)" class="w-[170px]">Sub (JID / Status)</th>
+<th onclick="sortTable(5)" class="w-[70px] cursor-pointer">User</th>
+
+<th class="w-[170px] text-left">
+Started
+<button id="filter-started-btn"
+class="ml-1 text-gray-500 hover:text-white">
+<i class="fa-solid fa-filter text-xs"></i>
+</button>
+</th>
+
+<th class="w-[170px] text-left">
+Completed
+<button id="filter-completed-btn"
+class="ml-1 text-gray-500 hover:text-white">
+<i class="fa-solid fa-filter text-xs"></i>
+</button>
+</th>
+
+<th class="w-[75px]">Duration</th>
+
+<th class="w-[122px]">Action</th>
+</tr>
+
+<!-- FILTER ROW -->
+<tr class="text-xs border-b border-gray-700">
+
+<th></th>
+<th></th>
+
+<!-- ENV -->
+<th>
+<select id="filter-env"
+onchange="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
+<option value="">All</option>
+<option>STAGE</option>
+<option>PROD</option>
+</select>
+</th>
+
+<!-- GROUP -->
+<th>
+<select id="filter-group"
+multiple
+placeholder="All"
+class="filter-select">
+</select>
+</th>
+
+<!-- SERVICES -->
+<th>
+<select id="filter-services"
+onchange="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
+<option value="">All</option>
+</select>
+</th>
+
+<th>
+<input id="filter-notes"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+
+<!-- REQUEST -->
+<th>
+<input id="filter-request"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<!-- STATUS -->
+<th>
+<select id="filter-status"
+onchange="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full">
+<option value="">All</option>
+<option>Abandoned</option>
+<option>Completed</option>
+<option>Errored</option>
+<option>On Hold</option>
+<option>Processing</option>
+</select>
+</th>
+
+<th>
+<input id="filter-parent"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<th>
+<input id="filter-child"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<th>
+<input id="filter-user"
+onkeyup="filterTable()"
+class="bg-gray-800 border border-gray-700 rounded px-1 py-1 w-full"/>
+</th>
+
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+
+</tr>
+
+</thead>
+
+<div id="notesModal"
+class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+<div class="bg-gray-900 border border-gray-700 rounded-lg p-4 w-[500px]">
+
+<div class="text-sm mb-2">Notes</div>
+
+<textarea id="notesText"
+class="w-full h-40 bg-gray-800 border border-gray-700 rounded p-2"></textarea>
+
+<div class="flex justify-end gap-2 mt-3">
+
+<button id="notesCancel"
+class="px-3 py-1 bg-gray-700 rounded">
+Cancel
+</button>
+
+<button id="notesSave"
+class="px-3 py-1 bg-blue-600 rounded">
+Save
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- This value 13px alone controls the font size of the table  -->
+<tbody class="text-[13px]">
+
+{% for req in records %}
+<tr id="row-{{ req.id }}" class="border-b border-gray-800 hover:bg-gray-800/40">
+
+<td>
+<input type="checkbox" class="row-select" value="{{ req.id }}">
+</td>
+
+<td class="row-number text-gray-200 font-bold text-sm text-center"></td>
+
+<td class="text-gray-400">
+{{ req.environment|upper }}
+</td>
+
+<!-- GROUP -->
+<td class="text-gray-300">
+{{ req.group.name|default:"-" }}
+</td>
+
+<!-- SERVICES -->
+<td class="services-cell group">
+
+{% with req.services.all|dictsort:"name" as services %}
+{% if services %}
+
+<span class="service-chip">
+{{ services.0.name }}
+{% if services|length > 1 %}
++{{ services|length|add:"-1" }}
+{% endif %}
+</span>
+
+<div class="services-tooltip">
+{% for s in services %}
+<div class="tooltip-item">{{ s.name }}</div>
+{% endfor %}
+</div>
+
+{% else %}
+-
+{% endif %}
+{% endwith %}
+
+</td>
+
+<!-- NOTES -->
+<td 
+class="notes-cell text-center"
+data-notes="{{ req.notes|default:''|escape }}"
+>
+
+{% if req.notes %}
+
+<button 
+class="notes-edit text-blue-400 hover:text-blue-300 text-sm"
+data-id="{{ req.id }}"
+data-notes="{{ req.notes|escape }}"
+title="Edit note">
+📝
+</button>
+
+<button 
+class="notes-delete text-red-400 hover:text-red-300 text-sm ml-2"
+data-id="{{ req.id }}"
+title="Delete note">
+🗑
+</button>
+
+{% else %}
+
+<button 
+class="notes-add text-gray-400 hover:text-gray-200 text-lg font-bold"
+data-id="{{ req.id }}"
+title="Add note">
++
+</button>
+
+{% endif %}
+
+</td>
+
+<td>
+{% if req.environment == "stage" %}
+
+<a href="http://workbench-stage:8765/Default.aspx?RequestId={{ req.request_id }}"
+target="_blank"
+class="text-blue-400 hover:text-blue-300 font-medium">
+{{ req.request_id }}
+</a>
+{% else %}
+<a href="http://workbench.intra.infousa.com:8765/default.aspx?RequestID={{ req.request_id }}"
+target="_blank"
+class="text-blue-400 hover:text-blue-300 font-medium">
+{{ req.request_id }}
+</a>
+{% endif %}
+</td>
+
+<td>
+<span id="status-{{ req.id }}">
+{% if req.overall_status %}
+{{ req.overall_status }}
+{% else %}
+{{ req.status }}
+{% endif %}
+</span>
+</td>
+
+<td id="parent-{{ req.id }}" class="whitespace-nowrap">
+{% if req.job_id %}
+<span class="font-mono text-blue-400">
+{{ req.job_id }}
+</span>
+<span class="text-gray-400 ml-2">
+{{ req.overall_status|default:"-" }}
+</span>
+{% else %}
+-
+{% endif %}
+</td>
+
+<td id="child-{{ req.id }}" class="whitespace-nowrap">
+{% if req.current_status %}
+{% with req.current_status.split as parts %}
+<span class="font-mono text-blue-400">
+{{ parts.0 }}
+</span>
+<span class="text-gray-400 ml-2">
+{{ parts|slice:"1:"|join:" " }}
+</span>
+{% endwith %}
+{% else %}
+-
+{% endif %}
+</td>
+
+<td id="user-{{ req.id }}">{{ req.submitter|default:"-" }}</td>
+
+<td id="started-{{ req.id }}">
+{{ req.started_at|date:"m/d/Y, g:i A"|default:"-" }}
+</td>
+
+<td id="completed-{{ req.id }}">
+{{ req.completed_at|date:"m/d/Y, g:i A"|default:"-" }}
+</td>
+
+<td id="duration-{{ req.id }}">-</td>
+
+<td>
+<div class="flex gap-2">
+
+<form method="post" action="{% url 'run_request' req.id %}">
+{% csrf_token %}
+
+<button type="submit"
+id="run-btn-{{ req.id }}"
+class="run-btn bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs flex items-center gap-1"
+data-id="{{ req.id }}">
+
+<i class="fa-solid fa-play"></i>
+<span class="btn-text">Run</span>
+
+<svg class="spinner hidden w-3 h-3 animate-spin"
+xmlns="http://www.w3.org/2000/svg"
+fill="none"
+viewBox="0 0 24 24">
+<circle class="opacity-25"
+cx="12" cy="12" r="10"
+stroke="white"
+stroke-width="4"></circle>
+<path class="opacity-75"
+fill="white"
+d="M4 12a8 8 0 018-8v8z"></path>
+</svg>
+
+</button>
+
+</form>
+
+<button type="button"
+class="recheck-btn
+border border-gray-600
+hover:border-gray-400
+px-2 py-1 rounded text-xs"
+data-id="{{ req.id }}">
+<i class="fa-solid fa-rotate"></i>
+</button>
+
+<button class="delete-btn
+text-red-500 hover:text-red-400
+px-2 py-1 text-xs"
+data-id="{{ req.id }}">
+<i class="fa-solid fa-trash"></i>
+</button>
+
+</td>
+
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+
+</div>
+</div>
+
+{% load static %}
+
+<div id="dateFilterPanel"
+class="hidden fixed right-6 top-24
+bg-gray-900 border border-gray-700
+rounded-lg p-3 shadow-xl w-72 z-50 text-xs">
+
+<div class="font-semibold mb-2">
+Filter Time
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+
+<!-- LEFT -->
+<div>
+
+<div class="text-gray-400 mb-1">From</div>
+<input id="timeFrom" type="datetime-local"
+class="w-full mb-2 bg-gray-800 border border-gray-700 rounded px-1 py-0.5">
+
+<div class="text-gray-400 mb-1">To</div>
+<input id="timeTo" type="datetime-local"
+class="w-full bg-gray-800 border border-gray-700 rounded px-1 py-0.5">
+
+</div>
+
+<!-- RIGHT -->
+<div>
+
+<div class="text-gray-400 mb-1">Quick</div>
+
+<div class="flex flex-col gap-1">
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="1h">
+Last 1 hour
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="6h">
+Last 6 hours
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="24h">
+Last 24 hours
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="today">
+Today
+</button>
+
+<button class="quick-time text-left px-2 py-1 bg-gray-800 rounded hover:bg-gray-700" data-range="yesterday">
+Yesterday
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="flex justify-between mt-3">
+
+<button id="applyDateFilter"
+class="bg-blue-600 px-3 py-1 rounded">
+Apply
+</button>
+
+<button id="clearDateFilter"
+class="text-gray-400">
+Clear
+</button>
+
+</div>
+
+</div>
+
+<script src="{% static 'workbench/queue.js' %}"></script>
+<script src="{% static 'workbench/index.js' %}?v={{ now|date:'U' }}"></script>
+
+
+
+{% endblock %}
